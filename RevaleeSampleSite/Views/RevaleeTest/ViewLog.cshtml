@@ -1,0 +1,48 @@
+﻿@model IEnumerable<RevaleeSampleSite.Infrastructure.CallbackDetails>
+<table>
+	<thead>
+		<tr>
+			<th>Requested At</th>
+			<th>Callback ID</th>
+			<th>Scheduled At</th>
+			<th>Parameter Value</th>
+			<th>Process Delay</th>
+			<th>Roundtrip Time</th>
+		</tr>
+	</thead>
+	<tbody>
+		@foreach (var item in Model)
+		{
+			<tr>
+				<td>
+					@item.ClientRequestedTime.ToLocalTime().ToString(@"yyyy-MM-dd\THH:mm:ss.fff")
+				</td>
+				<td>
+					@item.CallbackId
+				</td>
+				<td>
+					@item.ScheduledCallbackTime.ToLocalTime().ToString(@"yyyy-MM-dd\THH:mm:ss.FFF")
+				</td>
+				<td>
+					@item.ParameterValue
+				</td>
+				<td>
+					@(item.ServiceProcessedTime.HasValue ? item.ServiceProcessedTime.Value.Subtract(item.ScheduledCallbackTime).ToString(@"d\.hh\:mm\:ss\.fff") : "")
+				</td>
+				<td>
+					@(item.ClientReceivedTime.HasValue ? item.ClientReceivedTime.Value.Subtract(item.ClientRequestedTime).ToString(@"d\.hh\:mm\:ss\.fff") : "")
+				</td>
+			</tr>
+		}
+	</tbody>
+	<tfoot>
+		<tr>
+			<td class="left"><label>Requests Sent:</label> @ViewBag.TotalRequestCount.ToString("#,##0")</td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td></td>
+			<td class="right"><label>Callbacks Received:</label> @ViewBag.TotalCallbackCount.ToString("#,##0")</td>
+		</tr>
+	</tfoot>
+</table>

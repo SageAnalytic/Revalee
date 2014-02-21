@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Revalee Sample Site</title>
+	<link type="text/css" href="/Content/Site.css" rel="stylesheet" />
+	<script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.11.0.min.js"></script>
+</head>
+<body>
+	<h2>Revalee Sample Site</h2>
+	<h4>Testing console for the Revalee service.</h4>
+	<fieldset>
+		<div>
+			<div class="labeled-input"><label id="serviceBaseUrlLabel" for="serviceBaseUrl">Service Base URL:</label><input id="serviceBaseUrl" name="serviceBaseUrl" type="text" value="http://localhost:46200/" /></div>
+			<div class="labeled-input"><label id="callbackTimeLabel" for="callbackTime">Callback Time:</label><input id="callbackTime" name="callbackTime" type="datetime-local" /></div>
+			<div class="labeled-input"><label id="parameterValueLabel" for="parameterValue">Parameter Value:</label><input id="parameterValue" name="parameterValue" type="text" value="1" /></div>
+			<button id="submitButton" type="button">Submit</button>
+		</div>
+	</fieldset>
+	<div id="results"></div>
+	<footer>
+		<p>&copy; 2014 Sage Analytic Technologies, LLC.</p>
+	</footer>
+	<script type="text/javascript">
+		// Define the auto-refresh flag
+		var timerStarted = false;
+
+		// Define the url prefix of this web application
+		var currentAuthority = "@this.Request.Url.GetLeftPart(UriPartial.Authority)";
+
+		// Fetch contents of the callback log using AJAX
+		function refresh() {
+			$.ajax({
+				type: "GET",
+				url: "/RevaleeTest/ViewLog",
+				cache: false
+			}).done(function (html) {
+				$("#results").html(html);
+			});
+
+			if (timerStarted) {
+				setTimeout(refresh, 1000);
+			}
+		}
+
+		// Set the default callback time to the current time plus 10 seconds
+		function setCallbackTime() {
+			var currentTime = new Date();
+			currentTime.setSeconds(currentTime.getSeconds() + 10);
+			var timeString = currentTime.getFullYear() + "-"
+				+ (currentTime.getMonth() < 9 ? "0" : "") + (currentTime.getMonth() + 1) + "-"
+				+ (currentTime.getDate() < 10 ? "0" : "") + currentTime.getDate() + "T"
+				+ (currentTime.getHours() < 10 ? "0" : "") + currentTime.getHours() + ":"
+				+ (currentTime.getMinutes() < 10 ? "0" : "") + currentTime.getMinutes() + ":"
+				+ (currentTime.getSeconds() < 10 ? "0" : "") + currentTime.getSeconds();
+			$("#callbackTime").val(timeString);
+		}
+
+		// Submit button click handler
+		function submitButtonClickHandler() {
+			// Set up the callback parameters
+			var serviceBaseUrl = $("#serviceBaseUrl").val();
+			var callbackTime = new Date($("#callbackTime").val()).toISOString();
+			var callbackUrl = currentAuthority + "/RevaleeTest/Callback";
+
+			// Include optional parameter value
+			var parameterValue = $("#parameterValue").val();
+			if (parameterValue != "") {
+				callbackUrl += "?id=" + encodeURIComponent(parameterValue);
+			}
+
+			// AJAX call to schedule a callback
+			$.ajax({
+				type: "POST",
+				url: "/RevaleeTest/Schedule",
+				data: {
+					serviceBaseUri: serviceBaseUrl,
+					callbackTime: callbackTime,
+					callbackUri: callbackUrl
+				}
+			});
+
+			// Start the auto-refresh timer
+			if (!timerStarted) {
+				setTimeout(refresh, 1000);
+				timerStarted = true;
+			}
+
+			setCallbackTime();
+
+			// Auto-increment numeric parameter values
+			if (!isNaN(parameterValue)) {
+				$("#parameterValue").val(Number(parameterValue) + 1);
+			}
+		}
+
+		// Actions triggered on the page ready event
+		$(function () {
+			setCallbackTime();
+			$("#submitButton").click(submitButtonClickHandler);
+			refresh();
+		});
+	</script>
+</body>
+</html>

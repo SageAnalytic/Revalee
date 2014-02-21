@@ -1,0 +1,110 @@
+﻿body {
+	background-color: #fff;
+	color: #000;
+	font-family: 'Segoe UI', sans-serif;
+	font-size: 0.9em;
+	padding: 10px;
+}
+
+h2 {
+	margin-top: 0px;
+	font-weight: normal;
+	line-height: 1.0em;
+}
+
+h4 {
+	font-weight: normal;
+	line-height: 1.0em;
+	color: #666;
+}
+
+input {
+	font-family: 'Segoe UI', sans-serif;
+	font-size: 0.9em;
+	margin: 3px;
+	border: 1px solid #aaa;
+	background-color: #f6f6f6;
+}
+
+fieldset {
+	border: 1px solid #ccc;
+	margin: 0px;
+	padding: 10px;
+}
+
+label {
+	color: #666;
+	padding-right: 4px;
+}
+
+.labeled-input {
+	display: inline-block;
+	margin-right: 10px;
+	white-space: nowrap;
+}
+
+#serviceBaseUrl {
+	width: 230px;
+}
+
+#callbackTime {
+	width: 210px;
+}
+
+#parameterValue {
+	width: 160px;
+}
+
+button {
+	font-family: 'Segoe UI', sans-serif;
+	font-size: 0.9em;
+}
+
+#results {
+	margin: 20px 0px;
+	min-height: 100px;
+}
+
+table {
+	border: 1px solid #ccc;
+	width: 100%;
+	-moz-box-sizing: padding-box;
+	box-sizing: padding-box;
+}
+
+tbody tr:nth-child(even) {
+	background-color: #f6f6f6;
+}
+
+th {
+	color: #666;
+	font-weight: normal;
+	padding: 2px 8px;
+	border-bottom: 1px dotted #999;
+	text-align: left;
+}
+
+td {
+	padding: 8px;
+	white-space: nowrap;
+}
+
+tfoot td {
+	color: #000;
+	font-weight: normal;
+	padding: 2px 8px;
+	border-top: 1px dotted #999;
+	text-align: left;
+}
+
+	tfoot td.right {
+		text-align: right;
+	}
+
+	tfoot td label {
+		color: #666;
+	}
+
+footer {
+	color: #666;
+}
