@@ -18,6 +18,24 @@ Here are some common ways to utilize the power of scheduled callbacks:
 *   Consolidating multiple notification messages.
 *   Purging temporary files.
 
+Getting Started
+---------------
+
+The Revalee service can be downloaded [here](http://revalee.sageanalytic.com#Download) or built from the source code.
+
+To install the service, extract the files into a folder (e.g., C:\Program Files\Revalee\) and run the following command with elevated permissions:
+
+```
+Revalee.Service.exe -install
+```
+
+
+The Revalee client library is available on NuGet. To include in a .NET 4.0+ project, use:
+
+```
+Install-Package Revalee.Client
+```
+
 Usage Examples
 --------------
 
