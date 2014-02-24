@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30110.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RevaleeService", "RevaleeService\RevaleeService.csproj", "{6A077191-AF52-4307-A29E-AFD561D1BEFB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Revalee.Service", "Revalee.Service\Revalee.Service.csproj", "{6A077191-AF52-4307-A29E-AFD561D1BEFB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RevaleeClient", "RevaleeClient\RevaleeClient.csproj", "{459C6481-9884-497B-BE64-06B6B832B073}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Revalee.Client", "Revalee.Client\Revalee.Client.csproj", "{459C6481-9884-497B-BE64-06B6B832B073}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RevaleeSampleSite", "RevaleeSampleSite\RevaleeSampleSite.csproj", "{3813A1B5-AF66-4A9F-B8DB-A9CFFC249744}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Revalee.SampleSite", "Revalee.SampleSite\Revalee.SampleSite.csproj", "{3813A1B5-AF66-4A9F-B8DB-A9CFFC249744}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

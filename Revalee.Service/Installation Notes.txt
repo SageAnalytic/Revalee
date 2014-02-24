@@ -1,0 +1,37 @@
+﻿
+To install the service:
+	Revalee.Service.exe -install
+	
+To remove the service:
+	Revalee.Service.exe -uninstall
+
+On newer versions of Windows the HTTP listener will need to be registered.
+
+To register the listener on Windows 7 & Windows Server 2008 & Windows Server 2012:
+	netsh http add urlacl url=http://+:46200/ user="NT AUTHORITY\NETWORK SERVICE"
+
+
+To register the listener on Windows Vista:
+	netsh http add urlacl url=http://+:46200/ user="NT AUTHORITY\NETWORK SERVICE"
+	netsh http add iplisten ipaddress=0.0.0.0:46200
+
+
+To register the listener on Windows XP & Windows Server 2003:
+	httpcfg set urlacl /u http://+:46200/ /a D:(A;;GX;;;S-1-5-20)
+	httpcfg set iplisten -i 0.0.0.0:46200
+	
+
+Notes:	
+	netsh.exe can be found in the %Windows%\System32 directory.
+	httpcfg.exe can either be found in the %Windows%\System32 directory or installed from the Windows XP Service Pack 2 Support Tools.
+	The NT AUTHORITY\NETWORK SERVICE account needs file read rights to the directory where Revalee.Service.exe resides.
+
+
+To use the service:
+
+	Execute an HTTP "PUT" against http://127.0.0.1:46200/Schedule?CallbackTime={time_string}&CallbackUrl={full_url_to_callback}
+	
+	{time_string} can be any legally formatted RFC 1123 or ISO 8601 date/time string. If no timezone information is present, then UTC time will be assumed.
+
+	For example: http://127.0.0.1:46200/Schedule?CallbackTime=1999-12-31T23:59:59Z&CallbackUrl=http://127.0.0.1:80/Timers/WakeUp.aspx
+	
