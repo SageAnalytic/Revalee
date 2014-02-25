@@ -230,16 +230,18 @@ namespace Revalee.Service
 		{
 			Console.WriteLine(command + " " + arguments);
 
-			Process process = new Process();
-			process.StartInfo.FileName = command;
-			process.StartInfo.Arguments = arguments;
-			process.StartInfo.RedirectStandardOutput = true;
-			process.StartInfo.CreateNoWindow = true;
-			process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-			process.StartInfo.UseShellExecute = false;
-			process.Start();
-			Console.Write(process.StandardOutput.ReadToEnd());
-			process.WaitForExit();
+			using (var process = new Process())
+			{
+				process.StartInfo.FileName = command;
+				process.StartInfo.Arguments = arguments;
+				process.StartInfo.RedirectStandardOutput = true;
+				process.StartInfo.CreateNoWindow = true;
+				process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+				process.StartInfo.UseShellExecute = false;
+				process.Start();
+				Console.Write(process.StandardOutput.ReadToEnd());
+				process.WaitForExit();
+			}
 		}
 
 		private static string GetAclAccountSid()

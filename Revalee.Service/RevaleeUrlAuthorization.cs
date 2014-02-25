@@ -32,7 +32,7 @@ namespace Revalee.Service
 
 				if (_RetryCount < 0 || _RetryCount > 100)
 				{
-					throw new ArgumentOutOfRangeException("RetryCount");
+					throw new ArgumentOutOfRangeException("retryCount");
 				}
 			}
 		}

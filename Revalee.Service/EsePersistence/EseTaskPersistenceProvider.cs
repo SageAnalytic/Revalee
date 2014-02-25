@@ -3,6 +3,7 @@ using Microsoft.Isam.Esent.Interop.Windows7;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading;
@@ -660,10 +661,10 @@ namespace Revalee.Service.EsePersistence
 					Api.JetAddColumn(connection, tableId, _ColumnNameAttemptsRemaining, integerColumnDef, null, 0, out columnId);
 					Api.JetAddColumn(connection, tableId, _ColumnNameAuthorizationCipher, cipherColumnDef, null, 0, out columnId);
 
-					string primaryIndexDef = string.Format("+{1}{0}{0}", Convert.ToChar(0), _ColumnNameCallbackId);
+					string primaryIndexDef = string.Format(CultureInfo.InvariantCulture, "+{1}{0}{0}", Convert.ToChar(0), _ColumnNameCallbackId);
 					Api.JetCreateIndex(connection, tableId, "primary", CreateIndexGrbit.IndexPrimary, primaryIndexDef, primaryIndexDef.Length, 80);
 
-					string alternateIndexDef = string.Format("+{1}{0}+{2}{0}{0}", Convert.ToChar(0), _ColumnNameCallbackTime, _ColumnNameCreatedTime);
+					string alternateIndexDef = string.Format(CultureInfo.InvariantCulture, "+{1}{0}+{2}{0}{0}", Convert.ToChar(0), _ColumnNameCallbackTime, _ColumnNameCreatedTime);
 					Api.JetCreateIndex(connection, tableId, "due", CreateIndexGrbit.IndexDisallowNull, alternateIndexDef, alternateIndexDef.Length, 80);
 				}
 				finally

@@ -17,14 +17,12 @@ namespace Revalee.Service
 		[HostProtection(SecurityAction.LinkDemand, Resources = HostProtectionResource.ExternalProcessMgmt)]
 		private sealed class InternalLogHandler
 		{
-			[SecuritySafeCritical]
 			public InternalLogHandler()
 			{
 				this.TraceSource = new TraceSource(System.Reflection.Assembly.GetEntryAssembly().GetName().Name);
 				AppDomain.CurrentDomain.ProcessExit += new EventHandler(this.CloseOnProcessExit);
 			}
 
-			[SecuritySafeCritical]
 			private void CloseOnProcessExit(object sender, EventArgs e)
 			{
 				AppDomain.CurrentDomain.ProcessExit -= new EventHandler(this.CloseOnProcessExit);

@@ -280,6 +280,7 @@ namespace Revalee.Service
 		public void Dispose()
 		{
 			this.Cleanup();
+			GC.SuppressFinalize(this);
 		}
 
 		private static class SupervisorSingleton

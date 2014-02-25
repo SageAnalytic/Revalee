@@ -44,7 +44,7 @@ namespace Revalee.Client
 		{
 			if (callbackUrl == null || string.IsNullOrEmpty(callbackUrl.OriginalString))
 			{
-				throw new ArgumentNullException("CallbackUri");
+				throw new ArgumentNullException("callbackUrl");
 			}
 
 			short version = CurrentVersion;
@@ -80,14 +80,24 @@ namespace Revalee.Client
 			}
 
 			short version = incomingCipher.Version;
-			byte[] nonce = incomingCipher.Nonce;
-			byte[] clientKey = RetrieveClientKey();
-			byte[] subject = GetSubject(callbackUrl);
-			byte[] clientCryptogram = BuildClientCryptogram(nonce, subject, clientKey);
-			byte[] responseId = GetResponseId(callbackId);
-			byte[] serverCryptogram = BuildServerCryptogram(nonce, clientCryptogram, responseId);
 
-			return AreEqual(serverCryptogram, incomingCipher.Cryptogram);
+			switch (version)
+			{
+				case _CurrentVersion:
+
+					byte[] nonce = incomingCipher.Nonce;
+					byte[] clientKey = RetrieveClientKey();
+					byte[] subject = GetSubject(callbackUrl);
+					byte[] clientCryptogram = BuildClientCryptogram(nonce, subject, clientKey);
+					byte[] responseId = GetResponseId(callbackId);
+					byte[] serverCryptogram = BuildServerCryptogram(nonce, clientCryptogram, responseId);
+		
+					return AreEqual(serverCryptogram, incomingCipher.Cryptogram);
+
+				default:
+
+					return false;
+			}
 		}
 
 		private static short CurrentVersion

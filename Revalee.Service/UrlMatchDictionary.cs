@@ -166,7 +166,7 @@ namespace Revalee.Service
 			}
 		}
 
-		private string BuildMatchKey(Uri url)
+		private static string BuildMatchKey(Uri url)
 		{
 			return url.OriginalString;
 		}

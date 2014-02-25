@@ -83,11 +83,11 @@ namespace Revalee.Service
 
 		private static string DecodeHost(string host)
 		{
-			if (host.Equals(_HostPlusReplacementTag))
+			if (host.Equals(_HostPlusReplacementTag, StringComparison.Ordinal))
 			{
 				return "+";
 			}
-			else if (host.Equals(_HostAsteriskReplacementTag))
+			else if (host.Equals(_HostAsteriskReplacementTag, StringComparison.Ordinal))
 			{
 				return "*";
 			}
@@ -99,7 +99,7 @@ namespace Revalee.Service
 
 		private static string EncodeHostWithinUrl(string url)
 		{
-			int schemeDelimiterIndex = url.IndexOf(Uri.SchemeDelimiter, 0);
+			int schemeDelimiterIndex = url.IndexOf(Uri.SchemeDelimiter, 0, StringComparison.Ordinal);
 
 			if (schemeDelimiterIndex > 0)
 			{

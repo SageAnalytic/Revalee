@@ -34,8 +34,19 @@ using System.Threading.Tasks;
 
 namespace Revalee.Client
 {
-	public partial class RevaleeRegistrar
+	public static partial class RevaleeRegistrar
 	{
+		/// <summary>
+		/// Schedules a callback with the local Revalee service after a specified delay asynchronously.
+		/// </summary>
+		/// <param name="callbackDelay">A System.TimeSpan that represents a time interval to delay the callback.</param>
+		/// <param name="callbackUri">An absolute URL that will be requested on the callback.</param>
+		/// <returns>A System.Threading.Tasks.Task&lt;System.Guid&gt; and when complete, the result will be an identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> ScheduleCallbackAsync(TimeSpan callbackDelay, Uri callbackUri)
+		{
+			return ScheduleCallbackAsync(BuildDefaultServiceBaseUri(), DateTimeOffset.Now.Add(callbackDelay), callbackUri);
+		}
+	
 		/// <summary>
 		/// Schedules a callback after a specified delay asynchronously.
 		/// </summary>
@@ -58,6 +69,17 @@ namespace Revalee.Client
 		public static Task<Guid> ScheduleCallbackAsync(Uri serviceBaseUri, TimeSpan callbackDelay, Uri callbackUri)
 		{
 			return ScheduleCallbackAsync(serviceBaseUri, DateTimeOffset.Now.Add(callbackDelay), callbackUri);
+		}
+
+		/// <summary>
+		/// Schedules a callback with the local Revalee service at a specified time asynchronously.
+		/// </summary>
+		/// <param name="callbackTime">A System.DateTimeOffset that represents the scheduled moment of the callback.</param>
+		/// <param name="callbackUri">An absolute URL that will be requested on the callback.</param>
+		/// <returns>A System.Threading.Tasks.Task&lt;System.Guid&gt; and when complete, the result will be an identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> ScheduleCallbackAsync(DateTimeOffset callbackTime, Uri callbackUri)
+		{
+			return ScheduleCallbackAsync(BuildDefaultServiceBaseUri(), callbackTime, callbackUri);
 		}
 
 		/// <summary>

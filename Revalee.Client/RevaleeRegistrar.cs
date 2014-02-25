@@ -27,6 +27,7 @@ SOFTWARE.
 #endregion License
 
 using System;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Reflection;
@@ -37,17 +38,25 @@ namespace Revalee.Client
 	/// <summary>
 	/// Helper methods to interface with the Revalee service host.
 	/// </summary>
-	public partial class RevaleeRegistrar
+	public static partial class RevaleeRegistrar
 	{
-		/// <summary>
-		/// The default port number of a Revalee service listener.
-		/// </summary>
-		public const string DefaultServiceScheme = "http";
-		public const int DefaultHttpPortNumber = 46200;
-		public const int DefaultHttpsPortNumber = 46205;
-
+		private const string _DefaultServiceScheme = "http";
+		private const string _DefaultServiceHost = "localhost";
+		private const int _DefaultHttpPortNumber = 46200;
+		private const int _DefaultHttpsPortNumber = 46205;
 		private const int _HttpTimeoutInMilliseconds = 13000;
 		private const string _RevaleeAuthHttpHeaderName = "Revalee-Auth";
+
+		/// <summary>
+		/// Schedules a callback with the local Revalee service after a specified delay.
+		/// </summary>
+		/// <param name="callbackDelay">A System.TimeSpan that represents a time interval to delay the callback.</param>
+		/// <param name="callbackUri">An absolute URL that will be requested on the callback.</param>
+		/// <returns>A System.Guid that serves as an identifier for the successfully scheduled callback.</returns>
+		public static Guid ScheduleCallback(TimeSpan callbackDelay, Uri callbackUri)
+		{
+			return ScheduleCallback(BuildDefaultServiceBaseUri(), DateTimeOffset.Now.Add(callbackDelay), callbackUri);
+		}
 
 		/// <summary>
 		/// Schedules a callback after a specified delay.
@@ -71,6 +80,17 @@ namespace Revalee.Client
 		public static Guid ScheduleCallback(Uri serviceBaseUri, TimeSpan callbackDelay, Uri callbackUri)
 		{
 			return ScheduleCallback(serviceBaseUri, DateTimeOffset.Now.Add(callbackDelay), callbackUri);
+		}
+
+		/// <summary>
+		/// Schedules a callback with the local Revalee service at a specified time.
+		/// </summary>
+		/// <param name="callbackTime">A System.DateTimeOffset that represents the scheduled moment of the callback.</param>
+		/// <param name="callbackUri">An absolute URL that will be requested on the callback.</param>
+		/// <returns>A System.Guid that serves as an identifier for the successfully scheduled callback.</returns>
+		public static Guid ScheduleCallback(DateTimeOffset callbackTime, Uri callbackUri)
+		{
+			return ScheduleCallback(BuildDefaultServiceBaseUri(), callbackTime, callbackUri);
 		}
 
 		/// <summary>
@@ -175,6 +195,11 @@ namespace Revalee.Client
 				throw new ArgumentNullException("request");
 			}
 
+			if (request.Headers == null || request.Form == null)
+			{
+				return false;
+			}
+
 			string authorizationHeader = request.Headers[_RevaleeAuthHttpHeaderName];
 
 			if (string.IsNullOrWhiteSpace(authorizationHeader))
@@ -237,15 +262,15 @@ namespace Revalee.Client
 						throw new ArgumentException("Invalid host name specified for service host.", "serviceHost");
 					}
 
-					return (new UriBuilder(DefaultServiceScheme, serviceHost, DefaultHttpPortNumber)).Uri;
+					return (new UriBuilder(_DefaultServiceScheme, serviceHost, _DefaultHttpPortNumber)).Uri;
 				}
 				else
 				{
 					Uri serviceBaseUri;
 
-					if (serviceHost.IndexOf(Uri.SchemeDelimiter) < 0)
+					if (serviceHost.IndexOf(Uri.SchemeDelimiter, StringComparison.OrdinalIgnoreCase) < 0)
 					{
-						serviceBaseUri = new Uri(string.Concat(DefaultServiceScheme, Uri.SchemeDelimiter, serviceHost), UriKind.Absolute);
+						serviceBaseUri = new Uri(string.Concat(_DefaultServiceScheme, Uri.SchemeDelimiter, serviceHost), UriKind.Absolute);
 					}
 					else
 					{
@@ -264,15 +289,17 @@ namespace Revalee.Client
 
 					if (serviceBaseUri.IsDefaultPort)
 					{
-						if (Uri.UriSchemeHttp.Equals(serviceBaseUri.Scheme) && serviceHost.LastIndexOf(":80") < (serviceHost.Length - 3))
+						if (Uri.UriSchemeHttp.Equals(serviceBaseUri.Scheme, StringComparison.OrdinalIgnoreCase)
+							&& serviceHost.LastIndexOf(":80", StringComparison.Ordinal) < (serviceHost.Length - 3))
 						{
 							// Incorrect default port
-							return (new UriBuilder(serviceBaseUri.Scheme, serviceBaseUri.Host, DefaultHttpPortNumber)).Uri;
+							return (new UriBuilder(serviceBaseUri.Scheme, serviceBaseUri.Host, _DefaultHttpPortNumber)).Uri;
 						}
-						else if (Uri.UriSchemeHttps.Equals(serviceBaseUri.Scheme) && serviceHost.LastIndexOf(":443") < (serviceHost.Length - 4))
+						else if (Uri.UriSchemeHttps.Equals(serviceBaseUri.Scheme, StringComparison.OrdinalIgnoreCase)
+							&& serviceHost.LastIndexOf(":443", StringComparison.Ordinal) < (serviceHost.Length - 4))
 						{
 							// Incorrect default port
-							return (new UriBuilder(serviceBaseUri.Scheme, serviceBaseUri.Host, DefaultHttpsPortNumber)).Uri;
+							return (new UriBuilder(serviceBaseUri.Scheme, serviceBaseUri.Host, _DefaultHttpsPortNumber)).Uri;
 						}
 					}
 
@@ -285,14 +312,19 @@ namespace Revalee.Client
 			}
 		}
 
+		private static Uri BuildDefaultServiceBaseUri()
+		{
+			return (new UriBuilder(_DefaultServiceScheme, _DefaultServiceHost, _DefaultHttpPortNumber)).Uri;
+		}
+
 		private static string BuildScheduleRequestUrl(Uri serviceBaseUri, DateTime callbackUtcTime, Uri callbackUrl)
 		{
-			return string.Format("{0}://{1}/Schedule?CallbackTime={2:s}Z&CallbackUrl={3}", serviceBaseUri.Scheme, serviceBaseUri.Authority, callbackUtcTime, EscapeCallbackUrl(callbackUrl));
+			return string.Format(CultureInfo.InvariantCulture, "{0}://{1}/Schedule?CallbackTime={2:s}Z&CallbackUrl={3}", serviceBaseUri.Scheme, serviceBaseUri.Authority, callbackUtcTime, EscapeCallbackUrl(callbackUrl));
 		}
 
 		private static string BuildCancelRequestUrl(Uri serviceBaseUri, Guid callbackId, Uri callbackUrl)
 		{
-			return string.Format("{0}://{1}/Cancel?CallbackId={2:D}&CallbackUrl={3}", serviceBaseUri.Scheme, serviceBaseUri.Authority, callbackId, EscapeCallbackUrl(callbackUrl));
+			return string.Format(CultureInfo.InvariantCulture, "{0}://{1}/Cancel?CallbackId={2:D}&CallbackUrl={3}", serviceBaseUri.Scheme, serviceBaseUri.Authority, callbackId, EscapeCallbackUrl(callbackUrl));
 		}
 
 		private static string EscapeCallbackUrl(Uri callbackUrl)
@@ -309,7 +341,7 @@ namespace Revalee.Client
 			request.Method = WebRequestMethods.Http.Put;
 			request.Pipelined = false;
 			request.Timeout = _HttpTimeoutInMilliseconds;
-			request.UserAgent = string.Format("{0} v{1}", Assembly.GetCallingAssembly().GetName().Name, Assembly.GetCallingAssembly().GetName().Version.ToString());
+			request.UserAgent = string.Format(CultureInfo.InvariantCulture, "{0} v{1}", Assembly.GetCallingAssembly().GetName().Name, Assembly.GetCallingAssembly().GetName().Version.ToString());
 			request.ContentLength = 0;
 			return request;
 		}

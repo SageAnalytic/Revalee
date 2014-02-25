@@ -17,11 +17,6 @@ namespace Revalee.Service
 			public Thread Thread;
 		}
 
-		public static bool QueueUserWorkItem(WaitCallback callback)
-		{
-			return QueueUserWorkItem(callback, null);
-		}
-
 		public static bool QueueUserWorkItem(WaitCallback callback, object state)
 		{
 			if (callback == null)

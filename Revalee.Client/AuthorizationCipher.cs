@@ -28,8 +28,11 @@ SOFTWARE.
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
+using System.Security.Cryptography;
 using System.Text;
+using System.Threading;
 
 namespace Revalee.Client
 {
@@ -121,8 +124,10 @@ namespace Revalee.Client
 				decodedCipher = new AuthorizationCipher(source, version, nonce, cryptogram);
 				return true;
 			}
-			catch
+			catch (Exception)
 			{
+				// Prevent malicious programs from probing cipher handling by analyzing execution time of failures
+				ObfuscateExecutionTime();
 				decodedCipher = null;
 				return false;
 			}
@@ -132,7 +137,7 @@ namespace Revalee.Client
 		{
 			var cipher = new StringBuilder();
 			cipher.Append("v=");
-			cipher.Append(this.Version.ToString());
+			cipher.Append(this.Version.ToString(CultureInfo.InvariantCulture));
 			cipher.Append(",n=");
 			cipher.Append(ConvertByteArrayToHex(this.Nonce));
 			cipher.Append(",");
@@ -171,6 +176,18 @@ namespace Revalee.Client
 			}
 
 			return dictionary;
+		}
+
+		public static void ObfuscateExecutionTime()
+		{
+			byte[] milliseconds = new byte[2];
+
+			using (var rng = new RNGCryptoServiceProvider())
+			{
+				rng.GetBytes(milliseconds);
+			}
+
+			Thread.Sleep(Math.Abs(milliseconds[0] + milliseconds[1]));
 		}
 	}
 }

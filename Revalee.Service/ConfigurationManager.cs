@@ -11,7 +11,6 @@ namespace Revalee.Service
 
 		private UrlMatchDictionary<RevaleeUrlAuthorization> _AuthorizedTargets = new UrlMatchDictionary<RevaleeUrlAuthorization>();
 		private ListenerPrefix[] _ListenerPrefixes;
-		private readonly object _SyncRoot = new object();
 
 		public ConfigurationManager()
 		{

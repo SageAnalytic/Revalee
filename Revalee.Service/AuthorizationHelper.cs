@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -75,7 +76,7 @@ namespace Revalee.Service
 
 			for (int byteIndex = 0; byteIndex < serverCryptogram.Length; byteIndex++)
 			{
-				outgoingCipher.Append(serverCryptogram[byteIndex].ToString("X2"));
+				outgoingCipher.Append(serverCryptogram[byteIndex].ToString("X2", CultureInfo.InvariantCulture));
 			}
 
 			return outgoingCipher.ToString();

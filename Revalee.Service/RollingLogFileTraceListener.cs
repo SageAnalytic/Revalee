@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -206,7 +207,7 @@ namespace Revalee.Service
 				baseFilenameExtension = ".log";
 			}
 
-			return Path.Combine(Path.GetDirectoryName(baseFilename), string.Format("{0}.{1:yyyy-MM-dd}{2}", baseFilenameWithoutExtension, date, baseFilenameExtension));
+			return Path.Combine(Path.GetDirectoryName(baseFilename), string.Format(CultureInfo.InvariantCulture, "{0}.{1:yyyy-MM-dd}{2}", baseFilenameWithoutExtension, date, baseFilenameExtension));
 		}
 
 		private static string DetermineLogFileRoot()
@@ -255,7 +256,7 @@ namespace Revalee.Service
 
 				try
 				{
-					_Writer.Write(string.Format("[{0}] ", DateTimeOffset.Now));
+					_Writer.Write(string.Format(CultureInfo.InvariantCulture, "[{0}] ", DateTimeOffset.Now));
 					_Writer.WriteLine(message);
 					base.NeedIndent = true;
 				}

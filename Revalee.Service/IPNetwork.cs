@@ -9,9 +9,9 @@ namespace Revalee.Service
 {
 	public class IPNetwork
 	{
-		protected readonly IPAddress _NetworkAddress;
-		protected readonly int _CIDR;
-		protected readonly byte[] _Mask;
+		private readonly IPAddress _NetworkAddress;
+		private readonly int _CIDR;
+		private readonly byte[] _Mask;
 
 		public IPNetwork(IPAddress address)
 		{
@@ -53,7 +53,7 @@ namespace Revalee.Service
 			{
 				addressBitLength = 32;
 			}
-			else	 if (address.AddressFamily == AddressFamily.InterNetworkV6)
+			else if (address.AddressFamily == AddressFamily.InterNetworkV6)
 			{
 				addressBitLength = 128;
 			}
@@ -116,7 +116,7 @@ namespace Revalee.Service
 
 			string[] parts = value.Split(new char[] { '/' }, 2, StringSplitOptions.RemoveEmptyEntries);
 
-			switch ( parts.Length)
+			switch (parts.Length)
 			{
 				case 1:
 					IPAddress singleIPAddress;
@@ -210,7 +210,31 @@ namespace Revalee.Service
 
 		public override string ToString()
 		{
-			return string.Concat(_NetworkAddress.ToString(), "/", _CIDR.ToString());
+			return string.Concat(_NetworkAddress.ToString(), "/", _CIDR.ToString(CultureInfo.InvariantCulture));
+		}
+
+		protected IPAddress NetworkAddress
+		{
+			get
+			{
+				return _NetworkAddress;
+			}
+		}
+
+		protected int CIDR
+		{
+			get
+			{
+				return _CIDR;
+			}
+		}
+
+		protected byte[] Mask
+		{
+			get
+			{
+				return _Mask;
+			}
 		}
 
 		private static byte[] GenerateMask(int cidr, int addressBitLength)

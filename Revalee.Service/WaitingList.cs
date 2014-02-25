@@ -91,7 +91,7 @@ namespace Revalee.Service
 		{
 			if (initialCapacity < 0)
 			{
-				throw new ArgumentOutOfRangeException("Initial capacity cannot be negative.", "initialCapacity");
+				throw new ArgumentOutOfRangeException("initialCapacity", "Initial capacity cannot be negative.");
 			}
 
 			_InitialCapacity = initialCapacity;
@@ -351,6 +351,11 @@ namespace Revalee.Service
 				Array.Sort(_Heap, 0, _Size);
 				_IsOrdered = true;
 			}
+		}
+
+		public void CopyTo(T[] array, int index)
+		{
+			((ICollection)this).CopyTo(array, index);
 		}
 
 		void ICollection.CopyTo(Array array, int index)

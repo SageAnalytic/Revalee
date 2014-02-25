@@ -32,8 +32,12 @@ namespace Revalee.Service
 			catch (Exception ex)
 			{
 				Supervisor.LogException(ex, TraceEventType.Critical, "Service failed to start");
-				var controller = new ServiceController(this.ServiceName);
-				controller.Stop();
+
+				using (var controller = new ServiceController(this.ServiceName))
+				{
+					controller.Stop();
+				}
+
 				this.ExitCode = 1;
 			}
 		}

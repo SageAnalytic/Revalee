@@ -59,7 +59,7 @@ namespace Revalee.Service
 			{
 				if (hlex.ErrorCode == 5)
 				{
-					throw new Exception(string.Format("Administrator has not delegated the right to listen on this url prefix [{0}].", Supervisor.Configuration.ListenerPrefixes[0]), hlex);
+					throw new InvalidOperationException(string.Format("Administrator has not delegated the right to listen on this url prefix [{0}].", Supervisor.Configuration.ListenerPrefixes[0]), hlex);
 				}
 				else
 				{

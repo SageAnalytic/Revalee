@@ -55,19 +55,19 @@ namespace Revalee.Service
 			Initialize();
 		}
 
-		public void Add(T key)
+		public void Add(T item)
 		{
-			SetValue(key);
+			SetValue(item);
 		}
 
-		public bool Remove(T key)
+		public bool Remove(T item)
 		{
-			return DeleteValue(key);
+			return DeleteValue(item);
 		}
 
-		public bool Contains(T key)
+		public bool Contains(T item)
 		{
-			return (FindSlot(key) >= 0);
+			return (FindSlot(item) >= 0);
 		}
 
 		public int Count

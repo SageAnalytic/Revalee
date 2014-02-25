@@ -124,6 +124,11 @@ namespace Revalee.Service
 
 		public int CompareTo(RevaleeTask other)
 		{
+			if (other == null)
+			{
+				throw new ArgumentNullException("other");
+			}
+
 			if (_CallbackId.Equals(other.CallbackId))
 			{
 				return 0;
