@@ -34,34 +34,18 @@ namespace Revalee.SampleSite.Controllers
 		{
 			Interlocked.Increment(ref _TotalRequestCount);
 
-			try
-			{
-				Guid callbackId = RevaleeRegistrar.ScheduleCallback(serviceBaseUri, callbackTime, callbackUri);
-				_Log.Add(callbackId, callbackTime, callbackUri);
-				return this.Content("OK");
-			}
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine(ex.Message);
-				return this.Content("Error:" + ex.Message);
-			}
+			Guid callbackId = RevaleeRegistrar.ScheduleCallback(serviceBaseUri, callbackTime, callbackUri);
+			_Log.Add(callbackId, callbackTime, callbackUri);
+			return this.Content("OK");
 		}
 
 		public async Task<ActionResult> ScheduleAsync(Uri serviceBaseUri, DateTimeOffset callbackTime, Uri callbackUri)
 		{
 			Interlocked.Increment(ref _TotalRequestCount);
 
-			try
-			{
-				Guid callbackId = await RevaleeRegistrar.ScheduleCallbackAsync(serviceBaseUri, callbackTime, callbackUri);
-				_Log.Add(callbackId, callbackTime, callbackUri);
-				return this.Content("OK");
-			}
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine(ex.Message);
-				return this.Content("Error:" + ex.Message);
-			}
+			Guid callbackId = await RevaleeRegistrar.ScheduleCallbackAsync(serviceBaseUri, callbackTime, callbackUri);
+			_Log.Add(callbackId, callbackTime, callbackUri);
+			return this.Content("OK");
 		}
 
 		[AllowAnonymous]
@@ -70,29 +54,23 @@ namespace Revalee.SampleSite.Controllers
 		{
 			Interlocked.Increment(ref _TotalCallbackCount);
 
-			try
+			if (!RevaleeRegistrar.ValidateCallback(this.Request))
 			{
-				if (!RevaleeRegistrar.ValidateCallback(this.Request))
-				{
-					return new HttpStatusCodeResult(HttpStatusCode.Unauthorized);
-				}
-			}
-			catch (Exception ex)
-			{
-				System.Diagnostics.Debug.WriteLine(ex.Message);
-				return new HttpStatusCodeResult(HttpStatusCode.InternalServerError);
+				return new HttpStatusCodeResult(HttpStatusCode.Unauthorized);
 			}
 
 			Task.Run(() => _Log.Update(callbackId, currentServiceTime, this.Request.Url, id));
-			return this.Content("OK");
+
+			return new HttpStatusCodeResult(HttpStatusCode.OK);
 		}
 
 		protected override void OnException(ExceptionContext filterContext)
 		{
 			if (filterContext != null && filterContext.Exception != null)
 			{
-				System.Diagnostics.Debug.WriteLine(filterContext.Exception.Message);
+				System.Diagnostics.Debug.WriteLine("Error:" + filterContext.Exception.Message);
 			}
+
 			base.OnException(filterContext);
 		}
 	}
