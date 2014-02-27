@@ -32,7 +32,7 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Revalee.Client
+namespace Revalee.Client.Mvc
 {
 	public static partial class RevaleeRegistrar
 	{
@@ -46,7 +46,7 @@ namespace Revalee.Client
 		{
 			return ScheduleCallbackAsync(new ServiceBaseUri(), DateTimeOffset.Now.Add(callbackDelay), callbackUri);
 		}
-	
+
 		/// <summary>
 		/// Schedules a callback after a specified delay asynchronously.
 		/// </summary>
@@ -129,30 +129,30 @@ namespace Revalee.Client
 			ThreadPool.RegisterWaitForSingleObject((responseTask as IAsyncResult).AsyncWaitHandle, TimeoutCallback, webRequest, webRequest.Timeout, true);
 
 			return responseTask.ContinueWith(task =>
+			{
+				HttpWebResponse response = (HttpWebResponse)task.Result;
+				try
 				{
-					HttpWebResponse response = (HttpWebResponse)task.Result;
-					try
+					if (response.StatusCode == HttpStatusCode.OK)
 					{
-						if (response.StatusCode == HttpStatusCode.OK)
+						using (var reader = new StreamReader(response.GetResponseStream()))
 						{
-							using (var reader = new StreamReader(response.GetResponseStream()))
-							{
-								string responseText = reader.ReadToEnd();
+							string responseText = reader.ReadToEnd();
 
-								return Guid.ParseExact(responseText, "D");
-							}
-						}
-
-						return Guid.Empty;
-					}
-					finally
-					{
-						if (response != null)
-						{
-							response.Close();
+							return Guid.ParseExact(responseText, "D");
 						}
 					}
-				});
+
+					return Guid.Empty;
+				}
+				finally
+				{
+					if (response != null)
+					{
+						response.Close();
+					}
+				}
+			});
 		}
 
 		/// <summary>

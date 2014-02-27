@@ -55,6 +55,11 @@ label {
 	width: 160px;
 }
 
+#asyncOption {
+	margin-right: 4px;
+	vertical-align: middle;
+}
+
 button {
 	font-family: 'Segoe UI', sans-serif;
 	font-size: 0.9em;

@@ -33,7 +33,7 @@ using System.Net;
 using System.Reflection;
 using System.Web;
 
-namespace Revalee.Client
+namespace Revalee.Client.Mvc
 {
 	/// <summary>
 	/// Helper methods to interface with the Revalee service host.

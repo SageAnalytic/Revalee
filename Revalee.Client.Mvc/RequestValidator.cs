@@ -31,7 +31,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web.Hosting;
 
-namespace Revalee.Client
+namespace Revalee.Client.Mvc
 {
 	internal static class RequestValidator
 	{

@@ -15,6 +15,7 @@
 			<div class="labeled-input"><label id="serviceBaseUrlLabel" for="serviceBaseUrl">Service Base URL:</label><input id="serviceBaseUrl" name="serviceBaseUrl" type="text" value="http://localhost:46200/" /></div>
 			<div class="labeled-input"><label id="callbackTimeLabel" for="callbackTime">Callback Time:</label><input id="callbackTime" name="callbackTime" type="datetime-local" /></div>
 			<div class="labeled-input"><label id="parameterValueLabel" for="parameterValue">Parameter Value:</label><input id="parameterValue" name="parameterValue" type="text" value="1" /></div>
+			<div class="labeled-input"><input id="asyncOption" name="asyncOption" type="checkbox" /><label id="asyncOptionLabel" for="asyncOption">Async</label></div>
 			<button id="submitButton" type="button">Submit</button>
 		</div>
 	</fieldset>
@@ -47,7 +48,7 @@
 		// Set the default callback time to the current time plus 10 seconds
 		function setCallbackTime() {
 			var currentTime = new Date();
-			currentTime.setSeconds(currentTime.getSeconds() + 10);
+			currentTime.setTime(currentTime.getTime() + 10000);
 			var timeString = currentTime.getFullYear() + "-"
 				+ (currentTime.getMonth() < 9 ? "0" : "") + (currentTime.getMonth() + 1) + "-"
 				+ (currentTime.getDate() < 10 ? "0" : "") + currentTime.getDate() + "T"
@@ -63,6 +64,12 @@
 			var serviceBaseUrl = $("#serviceBaseUrl").val();
 			var callbackTime = new Date($("#callbackTime").val()).toISOString();
 			var callbackUrl = currentAuthority + "/RevaleeTest/Callback";
+			var scheduleUrl = "/RevaleeTest/Schedule";
+
+			var asyncOption = $("#asyncOption").prop("checked");
+			if (asyncOption) {
+				scheduleUrl += "Async";
+			}
 
 			// Include optional parameter value
 			var parameterValue = $("#parameterValue").val();
@@ -73,7 +80,7 @@
 			// AJAX call to schedule a callback
 			$.ajax({
 				type: "POST",
-				url: "/RevaleeTest/Schedule",
+				url: scheduleUrl,
 				data: {
 					serviceBaseUri: serviceBaseUrl,
 					callbackTime: callbackTime,

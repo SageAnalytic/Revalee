@@ -40,9 +40,11 @@
   <ItemGroup>
     <Compile Include="AsyncRevaleeRegistrar.cs" />
     <Compile Include="AuthorizationCipher.cs" />
+    <Compile Include="RevaleeClientSettings.cs" />
     <Compile Include="RequestValidator.cs" />
     <Compile Include="RevaleeRegistrar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ServiceBaseUri.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="License.txt">

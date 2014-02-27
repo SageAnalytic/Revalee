@@ -9,18 +9,16 @@ namespace Revalee.SampleSite.Infrastructure
 	{
 		private List<CallbackDetails> _Log = new List<CallbackDetails>();
 
-		internal void Add(Guid callbackId, DateTimeOffset callbackTime, Uri callbackUri)
+		internal void Add(Guid callbackId, DateTimeOffset callbackTime, Uri callbackUri, DateTimeOffset clientRequestedTime)
 		{
-			DateTimeOffset now = DateTimeOffset.Now;
 			lock (((ICollection)_Log).SyncRoot)
 			{
-				_Log.Add(new CallbackDetails() { CallbackId = callbackId, ScheduledCallbackTime = callbackTime, CallbackUri = callbackUri, ClientRequestedTime = now });
+				_Log.Add(new CallbackDetails() { CallbackId = callbackId, ScheduledCallbackTime = callbackTime, CallbackUri = callbackUri, ClientRequestedTime = clientRequestedTime });
 			}
 		}
 
-		internal void Update(Guid callbackId, DateTimeOffset currentServiceTime, Uri calledbackUri, string parameterValue)
+		internal void Update(Guid callbackId, DateTimeOffset currentServiceTime, Uri calledbackUri, string parameterValue, DateTimeOffset clientReceivedTime)
 		{
-			DateTimeOffset now = DateTimeOffset.Now;
 			lock (((ICollection)_Log).SyncRoot)
 			{
 				for (int index = _Log.Count - 1; index >= 0; index--)
@@ -30,7 +28,7 @@ namespace Revalee.SampleSite.Infrastructure
 					{
 						Debug.Assert(details.CallbackUri.OriginalString.Equals(calledbackUri.OriginalString));
 						details.ServiceProcessedTime = currentServiceTime;
-						details.ClientReceivedTime = now;
+						details.ClientReceivedTime = clientReceivedTime;
 						details.ParameterValue = parameterValue;
 					}
 				}

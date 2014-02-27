@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Revalee.Client", "Revalee.C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Revalee.SampleSite", "Revalee.SampleSite\Revalee.SampleSite.csproj", "{3813A1B5-AF66-4A9F-B8DB-A9CFFC249744}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Revalee.Client.Mvc", "Revalee.Client.Mvc\Revalee.Client.Mvc.csproj", "{AC55639C-BFCF-496C-9019-D3D911706699}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{3813A1B5-AF66-4A9F-B8DB-A9CFFC249744}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3813A1B5-AF66-4A9F-B8DB-A9CFFC249744}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3813A1B5-AF66-4A9F-B8DB-A9CFFC249744}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC55639C-BFCF-496C-9019-D3D911706699}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC55639C-BFCF-496C-9019-D3D911706699}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC55639C-BFCF-496C-9019-D3D911706699}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC55639C-BFCF-496C-9019-D3D911706699}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

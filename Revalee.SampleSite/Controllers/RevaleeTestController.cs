@@ -1,5 +1,5 @@
-﻿using Revalee.SampleSite.Infrastructure;
-using Revalee.Client;
+﻿using Revalee.Client.Mvc;
+using Revalee.SampleSite.Infrastructure;
 using System;
 using System.Net;
 using System.Threading;
@@ -8,6 +8,7 @@ using System.Web.Mvc;
 
 namespace Revalee.SampleSite.Controllers
 {
+	[RevaleeClientSettings(RequestTimeout = 3000)]
 	public class RevaleeTestController : Controller
 	{
 		private static CallbackLog _Log = new CallbackLog();
@@ -32,34 +33,45 @@ namespace Revalee.SampleSite.Controllers
 
 		public ActionResult Schedule(Uri serviceBaseUri, DateTimeOffset callbackTime, Uri callbackUri)
 		{
+			DateTimeOffset now = DateTimeOffset.Now;
+
 			Interlocked.Increment(ref _TotalRequestCount);
 
 			Guid callbackId = RevaleeRegistrar.ScheduleCallback(serviceBaseUri, callbackTime, callbackUri);
-			_Log.Add(callbackId, callbackTime, callbackUri);
-			return this.Content("OK");
+
+			_Log.Add(callbackId, callbackTime, callbackUri, now);
+
+			return new HttpStatusCodeResult(HttpStatusCode.OK);
 		}
 
+		[RevaleeClientSettings(ServiceBaseUri = "http://localhost:46200", RequestTimeout = 3000)]
 		public async Task<ActionResult> ScheduleAsync(Uri serviceBaseUri, DateTimeOffset callbackTime, Uri callbackUri)
 		{
+			DateTimeOffset now = DateTimeOffset.Now;
+
 			Interlocked.Increment(ref _TotalRequestCount);
 
-			Guid callbackId = await RevaleeRegistrar.ScheduleCallbackAsync(serviceBaseUri, callbackTime, callbackUri);
-			_Log.Add(callbackId, callbackTime, callbackUri);
-			return this.Content("OK");
+			// Supercede all configured values for ServiceBaseUri because the sample web page specifies this value at runtime.
+			// Normally, this value would be configured in the web.config or by the RevaleeClientSettings attribute.
+			RevaleeClientSettings.ServiceBaseUri = serviceBaseUri;
+
+			Guid callbackId = await this.CallbackAt(callbackUri, callbackTime);
+
+			_Log.Add(callbackId, callbackTime, callbackUri, now);
+
+			return new HttpStatusCodeResult(HttpStatusCode.OK);
 		}
 
 		[AllowAnonymous]
 		[HttpPost]
+		[CallbackAction]
 		public ActionResult Callback(Guid callbackId, DateTimeOffset callbackTime, DateTimeOffset currentServiceTime, string id)
 		{
+			DateTimeOffset now = DateTimeOffset.Now;
+
 			Interlocked.Increment(ref _TotalCallbackCount);
 
-			if (!RevaleeRegistrar.ValidateCallback(this.Request))
-			{
-				return new HttpStatusCodeResult(HttpStatusCode.Unauthorized);
-			}
-
-			Task.Run(() => _Log.Update(callbackId, currentServiceTime, this.Request.Url, id));
+			Task.Run(() => _Log.Update(callbackId, currentServiceTime, this.Request.Url, id, now));
 
 			return new HttpStatusCodeResult(HttpStatusCode.OK);
 		}
