@@ -172,6 +172,7 @@ namespace Revalee.Service
 				{
 					_IsStarted = true;
 					_IsPaused = false;
+					_ConfigurationManager.Initialize();
 					_StateManager.Initialize();
 					_RequestManager.Activate();
 				}
@@ -212,6 +213,7 @@ namespace Revalee.Service
 			{
 				if (_IsStarted & _IsPaused)
 				{
+					_ConfigurationManager.ReloadAuthorizedTargets();
 					_IsPaused = false;
 					_TimeManager.Start();
 				}

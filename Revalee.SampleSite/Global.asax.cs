@@ -17,7 +17,7 @@ namespace Revalee.SampleSite
 			Exception error = Server.GetLastError();
 			if (error != null)
 			{
-				System.Diagnostics.Debug.WriteLine(error.Message);
+				System.Diagnostics.Debug.WriteLine("Error: " + error.Message);
 			}
 		}
 	}

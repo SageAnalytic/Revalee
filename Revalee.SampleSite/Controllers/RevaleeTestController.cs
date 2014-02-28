@@ -1,4 +1,5 @@
-﻿using Revalee.Client.Mvc;
+﻿using Revalee.Client;
+using Revalee.Client.Mvc;
 using Revalee.SampleSite.Infrastructure;
 using System;
 using System.Net;
@@ -45,7 +46,7 @@ namespace Revalee.SampleSite.Controllers
 		}
 
 		[RevaleeClientSettings(ServiceBaseUri = "http://localhost:46200", RequestTimeout = 3000)]
-		public async Task<ActionResult> ScheduleAsync(Uri serviceBaseUri, DateTimeOffset callbackTime, Uri callbackUri)
+		public async Task<ActionResult> ScheduleAsync(Uri serviceBaseUri, DateTimeOffset callbackTime, Uri callbackUri, CancellationToken cancellationToken)
 		{
 			DateTimeOffset now = DateTimeOffset.Now;
 
@@ -55,7 +56,7 @@ namespace Revalee.SampleSite.Controllers
 			// Normally, this value would be configured in the web.config or by the RevaleeClientSettings attribute.
 			RevaleeClientSettings.ServiceBaseUri = serviceBaseUri;
 
-			Guid callbackId = await this.CallbackAt(callbackUri, callbackTime);
+			Guid callbackId = await this.CallbackAt(callbackUri, callbackTime, cancellationToken);
 
 			_Log.Add(callbackId, callbackTime, callbackUri, now);
 
@@ -80,9 +81,10 @@ namespace Revalee.SampleSite.Controllers
 		{
 			if (filterContext != null && filterContext.Exception != null)
 			{
-				System.Diagnostics.Debug.WriteLine("Error:" + filterContext.Exception.Message);
+				System.Diagnostics.Debug.WriteLine("Error: " + filterContext.Exception.Message);
 			}
 
+			filterContext.ExceptionHandled = true;
 			base.OnException(filterContext);
 		}
 	}

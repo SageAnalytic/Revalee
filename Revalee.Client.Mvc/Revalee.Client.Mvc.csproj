@@ -39,6 +39,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Helpers, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -66,19 +67,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AsyncRevaleeRegistrar.cs" />
-    <Compile Include="AuthorizationCipher.cs" />
     <Compile Include="CallbackActionAttribute.cs" />
-    <Compile Include="RevaleeClientSettings.cs" />
-    <Compile Include="RequestValidator.cs" />
     <Compile Include="RevaleeClientSettingsAttribute.cs" />
     <Compile Include="RevaleeControllerExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RevaleeRegistrar.cs" />
-    <Compile Include="ServiceBaseUri.cs" />
+    <Compile Include="SchedulingAgent.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Revalee.Client\Revalee.Client.csproj">
+      <Project>{459c6481-9884-497b-be64-06b6b832b073}</Project>
+      <Name>Revalee.Client</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

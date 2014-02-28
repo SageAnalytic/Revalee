@@ -9,22 +9,41 @@ namespace Revalee.Service
 	{
 		private const string _DefaultListenerPrefix = "http://+:46200/";
 
-		private UrlMatchDictionary<RevaleeUrlAuthorization> _AuthorizedTargets = new UrlMatchDictionary<RevaleeUrlAuthorization>();
+		private UrlMatchDictionary<RevaleeUrlAuthorization> _AuthorizedTargets;
 		private ListenerPrefix[] _ListenerPrefixes;
 
 		public ConfigurationManager()
 		{
-			LoadConfigFile();
 		}
 
 		public IPartialMatchDictionary<Uri, RevaleeUrlAuthorization> AuthorizedTargets
 		{
-			get { return _AuthorizedTargets; }
+			get
+			{
+				if (_AuthorizedTargets == null)
+				{
+					UrlMatchDictionary<RevaleeUrlAuthorization> authorizedTargets = LoadUrlAuthorizations();
+					_AuthorizedTargets = authorizedTargets;
+					return authorizedTargets;
+				}
+
+				return _AuthorizedTargets;
+			}
 		}
 
 		public ListenerPrefix[] ListenerPrefixes
 		{
-			get { return _ListenerPrefixes; }
+			get
+			{
+				if (_ListenerPrefixes == null)
+				{
+					ListenerPrefix[] listenerPrefixes = LoadListenerPrefixesSetting();
+					_ListenerPrefixes = listenerPrefixes;
+					return listenerPrefixes;
+				}
+
+				return _ListenerPrefixes;
+			}
 		}
 
 		public Type TaskPersistenceProvider
@@ -58,16 +77,21 @@ namespace Revalee.Service
 			}
 		}
 
-		private void LoadConfigFile()
+		public void Initialize()
 		{
-			LoadListenerPrefixesSetting();
-			LoadUrlAuthorizations();
+			_ListenerPrefixes = LoadListenerPrefixesSetting();
+			_AuthorizedTargets = LoadUrlAuthorizations();
 		}
 
-		private void LoadListenerPrefixesSetting()
+		public void ReloadAuthorizedTargets()
+		{
+			_AuthorizedTargets = LoadUrlAuthorizations();
+		}
+
+		private ListenerPrefix[] LoadListenerPrefixesSetting()
 		{
 			string setting = System.Configuration.ConfigurationManager.AppSettings["ListenerPrefixes"];
-			
+
 			if (!string.IsNullOrEmpty(setting))
 			{
 				string[] urls = setting.Split(new char[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
@@ -90,17 +114,18 @@ namespace Revalee.Service
 
 					if (acceptedPrefixes.Count > 0)
 					{
-						_ListenerPrefixes = acceptedPrefixes.ToArray();
-						return;
+						return acceptedPrefixes.ToArray();
 					}
-				} 
+				}
 			}
 
-			_ListenerPrefixes = new ListenerPrefix[] { new ListenerPrefix(_DefaultListenerPrefix) };
+			return new ListenerPrefix[] { new ListenerPrefix(_DefaultListenerPrefix) };
 		}
 
-		private void LoadUrlAuthorizations()
+		private UrlMatchDictionary<RevaleeUrlAuthorization> LoadUrlAuthorizations()
 		{
+			var authorizedTargets = new UrlMatchDictionary<RevaleeUrlAuthorization>();
+
 			SecuritySettingsConfigSection section = SecuritySettingsConfigSection.GetConfig();
 
 			if (section != null)
@@ -122,9 +147,11 @@ namespace Revalee.Service
 						}
 					}
 
-					_AuthorizedTargets.Add(authorization.UrlPrefix, authorization);
+					authorizedTargets.Add(authorization.UrlPrefix, authorization);
 				}
 			}
+
+			return authorizedTargets;
 		}
 
 		public void Dispose()

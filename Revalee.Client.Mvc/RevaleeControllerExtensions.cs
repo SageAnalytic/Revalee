@@ -27,6 +27,7 @@ SOFTWARE.
 #endregion License
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Mvc;
 using System.Web.Routing;
@@ -38,6 +39,8 @@ namespace Revalee.Client.Mvc
 	/// </summary>
 	public static class RevaleeControllerExtensions
 	{
+		#region Time-based callbacks
+
 		/// <summary>
 		/// Schedules a callback at a specified time.
 		/// </summary>
@@ -46,9 +49,9 @@ namespace Revalee.Client.Mvc
 		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset" /> that represents the date and time to issue the callback.</param>
 		/// <returns>A task that represents the asynchronous operation.
 		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
-		public async static Task<Guid> CallbackAt(this Controller controller, Uri callbackUri, DateTimeOffset callbackTime)
+		public static Task<Guid> CallbackAt(this Controller controller, Uri callbackUri, DateTimeOffset callbackTime)
 		{
-			return await RevaleeRegistrar.ScheduleCallbackAsync(callbackTime, callbackUri);
+			return SchedulingAgent.RequestCallbackAsync(callbackUri, callbackTime);
 		}
 
 		/// <summary>
@@ -110,7 +113,6 @@ namespace Revalee.Client.Mvc
 			return CallbackAt(controller, callbackUri, callbackTime);
 		}
 
-
 		/// <summary>
 		/// Schedules a callback to a controller action at a specified time.
 		/// </summary>
@@ -143,6 +145,125 @@ namespace Revalee.Client.Mvc
 			return CallbackAt(controller, callbackUri, callbackTime);
 		}
 
+		#endregion Time-based callbacks
+
+		#region Time-based callbacks with cancellation token
+
+		/// <summary>
+		/// Schedules a callback at a specified time.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackUri">An absolute <see cref="T:System.Uri" /> that will be requested on the callback.</param>
+		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset" /> that represents the date and time to issue the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackAt(this Controller controller, Uri callbackUri, DateTimeOffset callbackTime, CancellationToken cancellationToken)
+		{
+			return SchedulingAgent.RequestCallbackAsync(callbackUri, callbackTime, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to an action on this controller at a specified time.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset" /> that represents the date and time to issue the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionAt(this Controller controller, string actionName, DateTimeOffset callbackTime, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, null);
+			return CallbackAt(controller, callbackUri, callbackTime, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to a controller action at a specified time.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset" /> that represents the date and time to issue the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionAt(this Controller controller, string actionName, string controllerName, DateTimeOffset callbackTime, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, null);
+			return CallbackAt(controller, callbackUri, callbackTime, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to an action on this controller at a specified time.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset" /> that represents the date and time to issue the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionAt(this Controller controller, string actionName, RouteValueDictionary routeValues, DateTimeOffset callbackTime, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, routeValues);
+			return CallbackAt(controller, callbackUri, callbackTime, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to an action on this controller at a specified time.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset" /> that represents the date and time to issue the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionAt(this Controller controller, string actionName, object routeValues, DateTimeOffset callbackTime, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, new RouteValueDictionary(routeValues));
+			return CallbackAt(controller, callbackUri, callbackTime, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to a controller action at a specified time.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset" /> that represents the date and time to issue the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionAt(this Controller controller, string actionName, string controllerName, RouteValueDictionary routeValues, DateTimeOffset callbackTime, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, routeValues);
+			return CallbackAt(controller, callbackUri, callbackTime, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to a controller action at a specified time.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset" /> that represents the date and time to issue the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionAt(this Controller controller, string actionName, string controllerName, object routeValues, DateTimeOffset callbackTime, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, new RouteValueDictionary(routeValues));
+			return CallbackAt(controller, callbackUri, callbackTime, cancellationToken);
+		}
+
+		#endregion Time-based callbacks with cancellation token
+
+		#region Delay-based callbacks
+
 		/// <summary>
 		/// Schedules a callback after a specified delay.
 		/// </summary>
@@ -151,9 +272,9 @@ namespace Revalee.Client.Mvc
 		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan" /> that represents a time interval to delay the callback.</param>
 		/// <returns>A task that represents the asynchronous operation.
 		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
-		public async static Task<Guid> CallbackAfter(this Controller controller, Uri callbackUri, TimeSpan callbackDelay)
+		public static Task<Guid> CallbackAfter(this Controller controller, Uri callbackUri, TimeSpan callbackDelay)
 		{
-			return await RevaleeRegistrar.ScheduleCallbackAsync(callbackDelay, callbackUri);
+			return SchedulingAgent.RequestCallbackAsync(callbackUri, DateTimeOffset.Now.Add(callbackDelay));
 		}
 
 		/// <summary>
@@ -247,6 +368,125 @@ namespace Revalee.Client.Mvc
 			return CallbackAfter(controller, callbackUri, callbackDelay);
 		}
 
+		#endregion Delay-based callbacks
+
+		#region Delay-based callbacks with cancellation token
+
+		/// <summary>
+		/// Schedules a callback after a specified delay.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackUri">An absolute <see cref="T:System.Uri" /> that will be requested on the callback.</param>
+		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan" /> that represents a time interval to delay the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackAfter(this Controller controller, Uri callbackUri, TimeSpan callbackDelay, CancellationToken cancellationToken)
+		{
+			return SchedulingAgent.RequestCallbackAsync(callbackUri, DateTimeOffset.Now.Add(callbackDelay), cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to an action on this controller after a specified delay.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan" /> that represents a time interval to delay the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionAfter(this Controller controller, string actionName, TimeSpan callbackDelay, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, null);
+			return CallbackAfter(controller, callbackUri, callbackDelay, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to a controller action after a specified delay.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan" /> that represents a time interval to delay the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionAfter(this Controller controller, string actionName, string controllerName, TimeSpan callbackDelay, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, null);
+			return CallbackAfter(controller, callbackUri, callbackDelay, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to an action on this controller after a specified delay.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan" /> that represents a time interval to delay the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionAfter(this Controller controller, string actionName, RouteValueDictionary routeValues, TimeSpan callbackDelay, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, routeValues);
+			return CallbackAfter(controller, callbackUri, callbackDelay, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to an action on this controller after a specified delay.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan" /> that represents a time interval to delay the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionAfter(this Controller controller, string actionName, object routeValues, TimeSpan callbackDelay, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, new RouteValueDictionary(routeValues));
+			return CallbackAfter(controller, callbackUri, callbackDelay, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to a controller action after a specified delay.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan" /> that represents a time interval to delay the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionAfter(this Controller controller, string actionName, string controllerName, RouteValueDictionary routeValues, TimeSpan callbackDelay, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, routeValues);
+			return CallbackAfter(controller, callbackUri, callbackDelay, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to a controller action after a specified delay.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan" /> that represents a time interval to delay the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionAfter(this Controller controller, string actionName, string controllerName, object routeValues, TimeSpan callbackDelay, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, new RouteValueDictionary(routeValues));
+			return CallbackAfter(controller, callbackUri, callbackDelay, cancellationToken);
+		}
+
+		#endregion Delay-based callbacks with cancellation token
+
+		#region Uri construction
+
 		private static Uri BuildCallbackUri(Controller controller, string actionName, string controllerName, RouteValueDictionary routeValues)
 		{
 			string callbackUrlLeftPart = controller.Request.Url.GetLeftPart(UriPartial.Authority);
@@ -290,5 +530,7 @@ namespace Revalee.Client.Mvc
 
 			return routeValues;
 		}
+
+		#endregion Uri construction
 	}
 }

@@ -108,6 +108,10 @@
       <Project>{ac55639c-bfcf-496c-9019-d3d911706699}</Project>
       <Name>Revalee.Client.Mvc</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Revalee.Client\Revalee.Client.csproj">
+      <Project>{459c6481-9884-497b-be64-06b6b832b073}</Project>
+      <Name>Revalee.Client</Name>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

@@ -46,9 +46,9 @@ namespace Revalee.Client
 		/// <summary>
 		/// Schedules a callback after a specified delay.
 		/// </summary>
-		/// <param name="callbackDelay">A System.TimeSpan that represents a time interval to delay the callback.</param>
-		/// <param name="callbackUri">An absolute URL that will be requested on the callback.</param>
-		/// <returns>A System.Guid that serves as an identifier for the successfully scheduled callback.</returns>
+		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan"/> that represents a time interval to delay the callback.</param>
+		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
+		/// <returns>A <see cref="T:System.Guid"/> that serves as an identifier for the successfully scheduled callback.</returns>
 		public static Guid ScheduleCallback(TimeSpan callbackDelay, Uri callbackUri)
 		{
 			return ScheduleCallback(new ServiceBaseUri(), DateTimeOffset.Now.Add(callbackDelay), callbackUri);
@@ -58,9 +58,9 @@ namespace Revalee.Client
 		/// Schedules a callback after a specified delay.
 		/// </summary>
 		/// <param name="serviceHost">A DNS-style domain name or IP address for the Revalee service.</param>
-		/// <param name="callbackDelay">A System.TimeSpan that represents a time interval to delay the callback.</param>
-		/// <param name="callbackUri">An absolute URL that will be requested on the callback.</param>
-		/// <returns>A System.Guid that serves as an identifier for the successfully scheduled callback.</returns>
+		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan"/> that represents a time interval to delay the callback.</param>
+		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
+		/// <returns>A <see cref="T:System.Guid"/> that serves as an identifier for the successfully scheduled callback.</returns>
 		public static Guid ScheduleCallback(string serviceHost, TimeSpan callbackDelay, Uri callbackUri)
 		{
 			return ScheduleCallback(new ServiceBaseUri(serviceHost), DateTimeOffset.Now.Add(callbackDelay), callbackUri);
@@ -69,10 +69,10 @@ namespace Revalee.Client
 		/// <summary>
 		/// Schedules a callback after a specified delay.
 		/// </summary>
-		/// <param name="serviceBaseUri">A System.Uri representing the scheme, host, and port for the Revalee service (example: http://localhost:46200).</param>
-		/// <param name="callbackDelay">A System.TimeSpan that represents a time interval to delay the callback.</param>
-		/// <param name="callbackUri">An absolute URL that will be requested on the callback.</param>
-		/// <returns>A System.Guid that serves as an identifier for the successfully scheduled callback.</returns>
+		/// <param name="serviceBaseUri">A <see cref="T:System.Uri"/> representing the scheme, host, and port for the Revalee service (example: http://localhost:46200).</param>
+		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan"/> that represents a time interval to delay the callback.</param>
+		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
+		/// <returns>A <see cref="T:System.Guid"/> that serves as an identifier for the successfully scheduled callback.</returns>
 		public static Guid ScheduleCallback(Uri serviceBaseUri, TimeSpan callbackDelay, Uri callbackUri)
 		{
 			return ScheduleCallback(serviceBaseUri, DateTimeOffset.Now.Add(callbackDelay), callbackUri);
@@ -81,9 +81,9 @@ namespace Revalee.Client
 		/// <summary>
 		/// Schedules a callback at a specified time.
 		/// </summary>
-		/// <param name="callbackTime">A System.DateTimeOffset that represents the scheduled moment of the callback.</param>
-		/// <param name="callbackUri">An absolute URL that will be requested on the callback.</param>
-		/// <returns>A System.Guid that serves as an identifier for the successfully scheduled callback.</returns>
+		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset"/> that represents the scheduled moment of the callback.</param>
+		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
+		/// <returns>A <see cref="T:System.Guid"/> that serves as an identifier for the successfully scheduled callback.</returns>
 		public static Guid ScheduleCallback(DateTimeOffset callbackTime, Uri callbackUri)
 		{
 			return ScheduleCallback(new ServiceBaseUri(), callbackTime, callbackUri);
@@ -93,9 +93,9 @@ namespace Revalee.Client
 		/// Schedules a callback at a specified time.
 		/// </summary>
 		/// <param name="serviceHost">A DNS-style domain name or IP address for the Revalee service.</param>
-		/// <param name="callbackTime">A System.DateTimeOffset that represents the scheduled moment of the callback.</param>
-		/// <param name="callbackUri">An absolute URL that will be requested on the callback.</param>
-		/// <returns>A System.Guid that serves as an identifier for the successfully scheduled callback.</returns>
+		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset"/> that represents the scheduled moment of the callback.</param>
+		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
+		/// <returns>A <see cref="T:System.Guid"/> that serves as an identifier for the successfully scheduled callback.</returns>
 		public static Guid ScheduleCallback(string serviceHost, DateTimeOffset callbackTime, Uri callbackUri)
 		{
 			return ScheduleCallback(new ServiceBaseUri(serviceHost), callbackTime, callbackUri);
@@ -104,10 +104,10 @@ namespace Revalee.Client
 		/// <summary>
 		/// Schedules a callback at a specified time.
 		/// </summary>
-		/// <param name="serviceBaseUri">A System.Uri representing the scheme, host, and port for the Revalee service (example: http://localhost:46200).</param>
-		/// <param name="callbackTime">A System.DateTimeOffset that represents the scheduled moment of the callback.</param>
-		/// <param name="callbackUri">An absolute URL that will be requested on the callback.</param>
-		/// <returns>A System.Guid that serves as an identifier for the successfully scheduled callback.</returns>
+		/// <param name="serviceBaseUri">A <see cref="T:System.Uri"/> representing the scheme, host, and port for the Revalee service (example: http://localhost:46200).</param>
+		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset"/> that represents the scheduled moment of the callback.</param>
+		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
+		/// <returns>A <see cref="T:System.Guid"/> that serves as an identifier for the successfully scheduled callback.</returns>
 		public static Guid ScheduleCallback(Uri serviceBaseUri, DateTimeOffset callbackTime, Uri callbackUri)
 		{
 			if (serviceBaseUri == null)
@@ -118,6 +118,11 @@ namespace Revalee.Client
 			if (callbackUri == null)
 			{
 				throw new ArgumentNullException("callbackUri");
+			}
+
+			if (!callbackUri.IsAbsoluteUri)
+			{
+				callbackUri = ToAbsoluteUri(callbackUri);
 			}
 
 			string requestUrl = BuildScheduleRequestUrl(serviceBaseUri, callbackTime.UtcDateTime, callbackUri);
@@ -131,7 +136,7 @@ namespace Revalee.Client
 				webRequest.Headers.Add(_RevaleeAuthHttpHeaderName, authorizationHeaderValue);
 			}
 
-			Guid trackingGuid = ProcessScheduledCallbackSync(webRequest);
+			Guid trackingGuid = ProcessScheduledCallbackSync(webRequest, serviceBaseUri, callbackUri);
 
 			if (Guid.Empty.Equals(trackingGuid))
 			{
@@ -144,7 +149,7 @@ namespace Revalee.Client
 		/// <summary>
 		/// Cancels a previously scheduled callback.
 		/// </summary>
-		/// <param name="callbackId">A System.Guid that was previously returned from a scheduled callback.</param>
+		/// <param name="callbackId">A <see cref="T:System.Guid"/> that was previously returned from a scheduled callback.</param>
 		/// <param name="callbackUri">An absolute URL that matches the specified URL when originally scheduled.</param>
 		/// <returns>true if the cancellation request was accepted, false if not</returns>
 		public static bool CancelCallback(Guid callbackId, Uri callbackUri)
@@ -156,7 +161,7 @@ namespace Revalee.Client
 		/// Cancels a previously scheduled callback.
 		/// </summary>
 		/// <param name="serviceHost">A DNS-style domain name or IP address for the Revalee service.</param>
-		/// <param name="callbackId">A System.Guid that was previously returned from a scheduled callback.</param>
+		/// <param name="callbackId">A <see cref="T:System.Guid"/> that was previously returned from a scheduled callback.</param>
 		/// <param name="callbackUri">An absolute URL that matches the specified URL when originally scheduled.</param>
 		/// <returns>true if the cancellation request was accepted, false if not</returns>
 		public static bool CancelCallback(string serviceHost, Guid callbackId, Uri callbackUri)
@@ -167,8 +172,8 @@ namespace Revalee.Client
 		/// <summary>
 		/// Cancels a previously scheduled callback.
 		/// </summary>
-		/// <param name="serviceBaseUri">A System.Uri representing the scheme, host, and port for the Revalee service (example: http://localhost:46200).</param>
-		/// <param name="callbackId">A System.Guid that was previously returned from a scheduled callback.</param>
+		/// <param name="serviceBaseUri">A <see cref="T:System.Uri"/> representing the scheme, host, and port for the Revalee service (example: http://localhost:46200).</param>
+		/// <param name="callbackId">A <see cref="T:System.Guid"/> that was previously returned from a scheduled callback.</param>
 		/// <param name="callbackUri">An absolute URL that matches the specified URL when originally scheduled.</param>
 		/// <returns>true if the cancellation request was accepted, false if not</returns>
 		public static bool CancelCallback(Uri serviceBaseUri, Guid callbackId, Uri callbackUri)
@@ -183,11 +188,16 @@ namespace Revalee.Client
 				throw new ArgumentNullException("callbackUri");
 			}
 
+			if (!callbackUri.IsAbsoluteUri)
+			{
+				callbackUri = ToAbsoluteUri(callbackUri);
+			}
+
 			string requestUrl = BuildCancelRequestUrl(serviceBaseUri, callbackId, callbackUri);
 
 			WebRequest webRequest = CreateRequest(requestUrl);
 
-			return ProcessCanceledCallbackSync(webRequest);
+			return ProcessCanceledCallbackSync(webRequest, serviceBaseUri, callbackUri);
 		}
 
 		/// <summary>
@@ -223,49 +233,74 @@ namespace Revalee.Client
 			return RequestValidator.Validate(authorizationHeader, callbackId, request.Url);
 		}
 
-		private static Guid ProcessScheduledCallbackSync(WebRequest Request)
+		private static Guid ProcessScheduledCallbackSync(WebRequest Request, Uri serviceBaseUri, Uri callbackUri)
 		{
-			using (HttpWebResponse response = (HttpWebResponse)Request.GetResponse())
+			try
 			{
-				if (response.StatusCode == HttpStatusCode.OK)
+				using (HttpWebResponse response = (HttpWebResponse)Request.GetResponse())
 				{
-					using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+					if (response.StatusCode == HttpStatusCode.OK)
 					{
-						string responseText = reader.ReadToEnd();
-						return Guid.ParseExact(responseText, "D");
+						using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+						{
+							string responseText = reader.ReadToEnd();
+							return Guid.ParseExact(responseText, "D");
+						}
 					}
 				}
+			}
+			catch (WebException wex)
+			{
+				throw new RevaleeRequestException(serviceBaseUri, callbackUri, wex);
 			}
 
 			return Guid.Empty;
 		}
 
-		private static bool ProcessCanceledCallbackSync(WebRequest Request)
+		private static bool ProcessCanceledCallbackSync(WebRequest Request, Uri serviceBaseUri, Uri callbackUri)
 		{
-			using (HttpWebResponse response = (HttpWebResponse)Request.GetResponse())
+			try
 			{
-				if (response.StatusCode == HttpStatusCode.OK)
+				using (HttpWebResponse response = (HttpWebResponse)Request.GetResponse())
 				{
-					return true;
+					if (response.StatusCode == HttpStatusCode.OK)
+					{
+						return true;
+					}
 				}
+			}
+			catch (WebException wex)
+			{
+				throw new RevaleeRequestException(serviceBaseUri, callbackUri, wex);
 			}
 
 			return false;
 		}
 
-		private static string BuildScheduleRequestUrl(Uri serviceBaseUri, DateTime callbackUtcTime, Uri callbackUrl)
+		private static string BuildScheduleRequestUrl(Uri serviceBaseUri, DateTime callbackUtcTime, Uri callbackUri)
 		{
-			return string.Format(CultureInfo.InvariantCulture, "{0}://{1}/Schedule?CallbackTime={2:s}Z&CallbackUrl={3}", serviceBaseUri.Scheme, serviceBaseUri.Authority, callbackUtcTime, EscapeCallbackUrl(callbackUrl));
+			return string.Format(CultureInfo.InvariantCulture, "{0}://{1}/Schedule?CallbackTime={2:s}Z&CallbackUrl={3}", serviceBaseUri.Scheme, serviceBaseUri.Authority, callbackUtcTime, PrepareCallbackUrl(callbackUri));
 		}
 
-		private static string BuildCancelRequestUrl(Uri serviceBaseUri, Guid callbackId, Uri callbackUrl)
+		private static string BuildCancelRequestUrl(Uri serviceBaseUri, Guid callbackId, Uri callbackUri)
 		{
-			return string.Format(CultureInfo.InvariantCulture, "{0}://{1}/Cancel?CallbackId={2:D}&CallbackUrl={3}", serviceBaseUri.Scheme, serviceBaseUri.Authority, callbackId, EscapeCallbackUrl(callbackUrl));
+			return string.Format(CultureInfo.InvariantCulture, "{0}://{1}/Cancel?CallbackId={2:D}&CallbackUrl={3}", serviceBaseUri.Scheme, serviceBaseUri.Authority, callbackId, PrepareCallbackUrl(callbackUri));
 		}
 
-		private static string EscapeCallbackUrl(Uri callbackUrl)
+		private static string PrepareCallbackUrl(Uri callbackUri)
 		{
-			return Uri.EscapeDataString(callbackUrl.OriginalString);
+			return Uri.EscapeDataString(callbackUri.OriginalString);
+		}
+
+		private static Uri ToAbsoluteUri(Uri callbackUri)
+		{
+			HttpContext context = HttpContext.Current;
+			if (context != null && context.Request != null & context.Request.Url != null)
+			{
+				return new Uri(new Uri(context.Request.Url.GetLeftPart(UriPartial.Authority), UriKind.Absolute), callbackUri);
+			}
+
+			return new Uri(callbackUri.AbsoluteUri, UriKind.Absolute);
 		}
 
 		private static HttpWebRequest CreateRequest(string url)
@@ -297,7 +332,8 @@ namespace Revalee.Client
 
 		private static string GetUserAgent()
 		{
-			return string.Format(CultureInfo.InvariantCulture, "{0} v{1}", Assembly.GetCallingAssembly().GetName().Name, Assembly.GetCallingAssembly().GetName().Version.ToString());
+			AssemblyName assemblyName = Assembly.GetCallingAssembly().GetName();
+			return string.Format(CultureInfo.InvariantCulture, "{0}/{1}", assemblyName.Name, assemblyName.Version.ToString());
 		}
 	}
 }

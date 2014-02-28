@@ -33,28 +33,43 @@ using System.Web.Hosting;
 
 namespace Revalee.Client
 {
-	internal static class RequestValidator
+	/// <summary>
+	/// Helper methods to cryptographically ensure that callbacks are only processed when legitimately requested by this application.
+	/// </summary>
+	public static class RequestValidator
 	{
 		private const string _DefaultClientKey = "Revalee.Authorization";
 		private const short _CurrentVersion = 2;
 
-		internal static string Issue(Uri callbackUrl)
+		/// <summary>
+		/// Creates a cipher to be used to validate legitimate callbacks.
+		/// </summary>
+		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
+		/// <returns>A cipher value for this callback.</returns>
+		public static string Issue(Uri callbackUri)
 		{
-			if (callbackUrl == null || string.IsNullOrEmpty(callbackUrl.OriginalString))
+			if (callbackUri == null || string.IsNullOrEmpty(callbackUri.OriginalString))
 			{
-				throw new ArgumentNullException("callbackUrl");
+				throw new ArgumentNullException("callbackUri");
 			}
 
 			short version = CurrentVersion;
 			byte[] nonce = GenerateNonce();
 			byte[] clientKey = RetrieveClientKey();
-			byte[] subject = GetSubject(callbackUrl);
+			byte[] subject = GetSubject(callbackUri);
 			byte[] clientCryptogram = BuildClientCryptogram(nonce, subject, clientKey);
 
 			return new AuthorizationCipher(AuthorizationCipher.CipherSource.Client, version, nonce, clientCryptogram).ToString();
 		}
 
-		internal static bool Validate(string authorizationHeaderValue, Guid callbackId, Uri callbackUrl)
+		/// <summary>
+		/// Validates the cipher to ensure it represents a legitimately requested callback.
+		/// </summary>
+		/// <param name="authorizationHeaderValue">A cipher value for this callback.</param>
+		/// <param name="callbackId">A <see cref="T:System.Guid"/> that serves as an identifier for the scheduled callback.</param>
+		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
+		/// <returns>true if the cipher is valid, false if not.</returns>
+		public static bool Validate(string authorizationHeaderValue, Guid callbackId, Uri callbackUri)
 		{
 			if (string.IsNullOrEmpty(authorizationHeaderValue))
 			{
@@ -66,7 +81,7 @@ namespace Revalee.Client
 				return false;
 			}
 
-			if (callbackUrl == null || string.IsNullOrEmpty(callbackUrl.OriginalString))
+			if (callbackUri == null || string.IsNullOrEmpty(callbackUri.OriginalString))
 			{
 				return false;
 			}
@@ -85,7 +100,7 @@ namespace Revalee.Client
 
 					byte[] nonce = incomingCipher.Nonce;
 					byte[] clientKey = RetrieveClientKey();
-					byte[] subject = GetSubject(callbackUrl);
+					byte[] subject = GetSubject(callbackUri);
 					byte[] clientCryptogram = BuildClientCryptogram(nonce, subject, clientKey);
 					byte[] responseId = GetResponseId(callbackId);
 					byte[] serverCryptogram = BuildServerCryptogram(nonce, clientCryptogram, responseId);
@@ -136,9 +151,9 @@ namespace Revalee.Client
 			return Encoding.UTF8.GetBytes(key);
 		}
 
-		private static byte[] GetSubject(Uri callbackUrl)
+		private static byte[] GetSubject(Uri callbackUri)
 		{
-			return Encoding.UTF8.GetBytes(callbackUrl.OriginalString);
+			return Encoding.UTF8.GetBytes(callbackUri.OriginalString);
 		}
 
 		private static byte[] GetResponseId(Guid callbackId)

@@ -36,6 +36,13 @@ The Revalee client library is available on NuGet. To include in a .NET 4.0+ proj
 Install-Package Revalee.Client
 ```
 
+
+Alternatively for ASP.NET MVC projects targeting .NET 4.5+, a specialized Revalee client library is also available on NuGet. To install:
+
+```
+Install-Package Revalee.Client.Mvc
+```
+
 Usage Examples
 --------------
 
@@ -56,6 +63,8 @@ Supported Platforms
 Client library
 
 *  .NET Framework 4.0+ (only System, System.Core, System.Web assemblies are referenced)
+
+The ASP.NET MVC client library requires .NET Framework 4.5+ and Microsoft ASP.NET MVC 5+.
 
 
 More information is available at the [Revalee Project Site](http://revalee.sageanalytic.com).

@@ -23,6 +23,10 @@ namespace Revalee.Service
 			RegisterHttpPrefix();
 
 			SetDefaultDataFolderPermissions();
+
+#if !DEBUG
+			StartupService();
+#endif
 		}
 
 		public void Uninstall()
@@ -224,6 +228,11 @@ namespace Revalee.Service
 			{
 				throw new SecurityException("Insufficient permissions to perform this action.", ex);
 			}
+		}
+
+		private void StartupService()
+		{
+			LaunchNetShellCommand("sc", string.Format("start {0}", GetServiceName()));
 		}
 
 		private void LaunchNetShellCommand(string command, string arguments)

@@ -30,20 +30,27 @@ using System;
 
 namespace Revalee.Client
 {
-	internal class ServiceBaseUri : Uri
+	/// <summary>Creates a <see cref="T:System.Uri"/> for use as the base Uri for the Revalee service.</summary>
+	public class ServiceBaseUri : Uri
 	{
 		private const string _DefaultServiceScheme = "http";
 		private const string _DefaultServiceHost = "localhost";
 		private const int _DefaultHttpPortNumber = 46200;
 		private const int _DefaultHttpsPortNumber = 46205;
 
+		/// <summary>Initializes a new instance of the <see cref="T:Revalee.Client.ServiceBaseUri" /> class with the configured identifier.</summary>
+		/// <exception cref="T:System.UriFormatException">The configured value is not valid as a service base Uri for the Revalee service.</exception>
 		public ServiceBaseUri()
-			: base(BuildServiceBase(), UriKind.Absolute)
+			: base(BuildConfiguredServiceBase(), UriKind.Absolute)
 		{
 		}
 
+		/// <summary>Initializes a new instance of the <see cref="T:Revalee.Client.ServiceBaseUri" /> class with the specified identifier.</summary>
+		/// <param name="serviceHost">A DNS-style domain name, IP address, or full URL for the Revalee service.</param>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceHost" /> is null.</exception>
+		/// <exception cref="T:System.UriFormatException"><paramref name="serviceHost" /> is not valid as a service base Uri for the Revalee service.</exception>
 		public ServiceBaseUri(string serviceHost)
-			: base(BuildServiceBase(serviceHost), UriKind.Absolute)
+			: base(BuildSpecifiedServiceBase(serviceHost), UriKind.Absolute)
 		{
 		}
 
@@ -52,7 +59,72 @@ namespace Revalee.Client
 		{
 		}
 
-		private static string BuildServiceBase()
+		/// <summary>Creates a new instance of the <see cref="T:Revalee.Client.ServiceBaseUri" /> class with the specified identifier.</summary>
+		/// <returns>A <see cref="T:System.Boolean" /> value that is true if the <see cref="T:Revalee.Client.ServiceBaseUri" /> was successfully created; otherwise, false.</returns>
+		/// <param name="serviceHost">A DNS-style domain name, IP address, or full URL for the Revalee service.</param>
+		/// <param name="uri">When this method returns, contains the constructed <see cref="T:Revalee.Client.ServiceBaseUri" />.</param>
+		public static bool TryCreate(string serviceHost, out ServiceBaseUri uri)
+		{
+			if (!string.IsNullOrWhiteSpace(serviceHost))
+			{
+				if (serviceHost.IndexOfAny(new char[] { ':', '/' }, 0) < 0)
+				{
+					if (Uri.CheckHostName(serviceHost) != UriHostNameType.Unknown)
+					{
+						uri = new ServiceBaseUri(new UriBuilder(_DefaultServiceScheme, serviceHost, _DefaultHttpPortNumber).ToString(), UriKind.Absolute);
+						return true;
+					}
+				}
+				else
+				{
+					Uri proxyUri = null;
+
+					if (serviceHost.IndexOf(Uri.SchemeDelimiter, StringComparison.OrdinalIgnoreCase) < 0)
+					{
+						Uri.TryCreate(string.Concat(_DefaultServiceScheme, Uri.SchemeDelimiter, serviceHost), UriKind.Absolute, out proxyUri);
+					}
+					else
+					{
+						Uri.TryCreate(serviceHost, UriKind.Absolute, out proxyUri);
+					}
+
+					if (proxyUri != null
+						&& proxyUri.HostNameType != UriHostNameType.Unknown
+						&& proxyUri.IsAbsoluteUri
+						&& (Uri.UriSchemeHttp.Equals(proxyUri.Scheme) || Uri.UriSchemeHttps.Equals(proxyUri.Scheme)))
+					{
+
+						if (proxyUri.IsDefaultPort)
+						{
+							if (Uri.UriSchemeHttp.Equals(proxyUri.Scheme, StringComparison.OrdinalIgnoreCase)
+								&& serviceHost.LastIndexOf(":80", StringComparison.Ordinal) < (serviceHost.Length - 3))
+							{
+								// Incorrect default port
+								uri = new ServiceBaseUri(new UriBuilder(proxyUri.Scheme, proxyUri.Host, _DefaultHttpPortNumber).ToString(), UriKind.Absolute);
+								return true;
+							}
+							else if (Uri.UriSchemeHttps.Equals(proxyUri.Scheme, StringComparison.OrdinalIgnoreCase)
+								&& serviceHost.LastIndexOf(":443", StringComparison.Ordinal) < (serviceHost.Length - 4))
+							{
+								// Incorrect default port
+								uri = new ServiceBaseUri(new UriBuilder(proxyUri.Scheme, proxyUri.Host, _DefaultHttpsPortNumber).ToString(), UriKind.Absolute);
+								return true;
+							}
+						}
+						else
+						{
+							uri = new ServiceBaseUri(proxyUri.ToString(), UriKind.Absolute);
+							return true;
+						}
+					}
+				}
+			}
+
+			uri = null;
+			return false;
+		}
+
+		private static string BuildConfiguredServiceBase()
 		{
 			Uri configuredServiceBaseUri = RevaleeClientSettings.ServiceBaseUri;
 
@@ -64,7 +136,7 @@ namespace Revalee.Client
 			return configuredServiceBaseUri.ToString();
 		}
 
-		private static string BuildServiceBase(string serviceHost)
+		private static string BuildSpecifiedServiceBase(string serviceHost)
 		{
 			if (string.IsNullOrWhiteSpace(serviceHost))
 			{
@@ -128,67 +200,6 @@ namespace Revalee.Client
 					throw new ArgumentException("Invalid format specified for service host.", "serviceHost", ufex);
 				}
 			}
-		}
-
-		public static bool TryCreate(string serviceHost, out ServiceBaseUri uri)
-		{
-			if (!string.IsNullOrWhiteSpace(serviceHost))
-			{
-				if (serviceHost.IndexOfAny(new char[] { ':', '/' }, 0) < 0)
-				{
-					if (Uri.CheckHostName(serviceHost) != UriHostNameType.Unknown)
-					{
-						uri = new ServiceBaseUri(new UriBuilder(_DefaultServiceScheme, serviceHost, _DefaultHttpPortNumber).ToString(), UriKind.Absolute);
-						return true;
-					}
-				}
-				else
-				{
-					Uri proxyUri = null;
-
-					if (serviceHost.IndexOf(Uri.SchemeDelimiter, StringComparison.OrdinalIgnoreCase) < 0)
-					{
-						Uri.TryCreate(string.Concat(_DefaultServiceScheme, Uri.SchemeDelimiter, serviceHost), UriKind.Absolute, out proxyUri);
-					}
-					else
-					{
-						Uri.TryCreate(serviceHost, UriKind.Absolute, out proxyUri);
-					}
-
-					if (proxyUri != null
-						&& proxyUri.HostNameType != UriHostNameType.Unknown
-						&& proxyUri.IsAbsoluteUri
-						&& (Uri.UriSchemeHttp.Equals(proxyUri.Scheme) || Uri.UriSchemeHttps.Equals(proxyUri.Scheme)))
-					{
-
-						if (proxyUri.IsDefaultPort)
-						{
-							if (Uri.UriSchemeHttp.Equals(proxyUri.Scheme, StringComparison.OrdinalIgnoreCase)
-								&& serviceHost.LastIndexOf(":80", StringComparison.Ordinal) < (serviceHost.Length - 3))
-							{
-								// Incorrect default port
-								uri = new ServiceBaseUri(new UriBuilder(proxyUri.Scheme, proxyUri.Host, _DefaultHttpPortNumber).ToString(), UriKind.Absolute);
-								return true;
-							}
-							else if (Uri.UriSchemeHttps.Equals(proxyUri.Scheme, StringComparison.OrdinalIgnoreCase)
-								&& serviceHost.LastIndexOf(":443", StringComparison.Ordinal) < (serviceHost.Length - 4))
-							{
-								// Incorrect default port
-								uri = new ServiceBaseUri(new UriBuilder(proxyUri.Scheme, proxyUri.Host, _DefaultHttpsPortNumber).ToString(), UriKind.Absolute);
-								return true;
-							}
-						}
-						else
-						{
-							uri = new ServiceBaseUri(proxyUri.ToString(), UriKind.Absolute);
-							return true;
-						}
-					}
-				}
-			}
-
-			uri = null;
-			return false;
 		}
 	}
 }
