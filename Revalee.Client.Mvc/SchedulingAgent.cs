@@ -27,6 +27,7 @@ SOFTWARE.
 #endregion License
 
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Net.Http;
@@ -40,6 +41,7 @@ namespace Revalee.Client.Mvc
 	{
 		private const int _DefaultRequestTimeoutInMilliseconds = 13000;
 		private const string _RevaleeAuthHttpHeaderName = "Revalee-Auth";
+		private static readonly string _UserAgent = InitializeUserAgent();
 
 		public static Task<Guid> RequestCallbackAsync(Uri callbackUri, DateTimeOffset callbackTime)
 		{
@@ -72,7 +74,7 @@ namespace Revalee.Client.Mvc
 					httpClient.MaxResponseContentBufferSize = 1024;
 
 					var requestMessage = new HttpRequestMessage(HttpMethod.Put, requestUrl);
-					requestMessage.Headers.Add("User-Agent", GetUserAgent());
+					requestMessage.Headers.Add("User-Agent", _UserAgent);
 
 					if (!string.IsNullOrEmpty(authorizationHeaderValue))
 					{
@@ -114,10 +116,12 @@ namespace Revalee.Client.Mvc
 			return Uri.EscapeDataString(callbackUri.OriginalString);
 		}
 
-		private static string GetUserAgent()
+		private static string InitializeUserAgent()
 		{
-			AssemblyName assemblyName = Assembly.GetCallingAssembly().GetName();
-			return string.Format(CultureInfo.InvariantCulture, "{0}/{1}", assemblyName.Name, assemblyName.Version.ToString());
+			Assembly callingAssembly = Assembly.GetCallingAssembly();
+			AssemblyName assemblyName = callingAssembly.GetName();
+			FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(callingAssembly.Location);
+			return string.Format(CultureInfo.InvariantCulture, "{0}/{1}", assemblyName.Name, versionInfo.ProductVersion);
 		}
 
 		private static TimeSpan GetWebRequestTimeout()

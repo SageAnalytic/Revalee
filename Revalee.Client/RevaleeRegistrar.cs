@@ -27,6 +27,7 @@ SOFTWARE.
 #endregion License
 
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Net;
@@ -42,6 +43,7 @@ namespace Revalee.Client
 	{
 		private const int _DefaultRequestTimeoutInMilliseconds = 13000;
 		private const string _RevaleeAuthHttpHeaderName = "Revalee-Auth";
+		private static readonly string _UserAgent = InitializeUserAgent();
 
 		/// <summary>
 		/// Schedules a callback after a specified delay.
@@ -312,7 +314,7 @@ namespace Revalee.Client
 			request.Method = WebRequestMethods.Http.Put;
 			request.Pipelined = false;
 			request.Timeout = GetWebRequestTimeout();
-			request.UserAgent = GetUserAgent();
+			request.UserAgent = _UserAgent;
 			request.ContentLength = 0;
 			return request;
 		}
@@ -330,10 +332,12 @@ namespace Revalee.Client
 			}
 		}
 
-		private static string GetUserAgent()
+		private static string InitializeUserAgent()
 		{
-			AssemblyName assemblyName = Assembly.GetCallingAssembly().GetName();
-			return string.Format(CultureInfo.InvariantCulture, "{0}/{1}", assemblyName.Name, assemblyName.Version.ToString());
+			Assembly callingAssembly = Assembly.GetCallingAssembly();
+			AssemblyName assemblyName = callingAssembly.GetName();
+			FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(callingAssembly.Location);
+			return string.Format(CultureInfo.InvariantCulture, "{0}/{1}", assemblyName.Name, versionInfo.ProductVersion);
 		}
 	}
 }

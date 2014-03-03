@@ -16,6 +16,6 @@ using System.Resources;
 [assembly: ComVisible(false)]
 [assembly: Guid("d6845934-7ec2-4a09-aafc-c73dc94976f4")]
 [assembly: NeutralResourcesLanguageAttribute("en-US")]
-[assembly: AssemblyVersion("2.1.0")]
+[assembly: AssemblyVersion("2.0.0")]
 [assembly: AssemblyFileVersion("2.1.0")]
 [assembly: AssemblyInformationalVersion("2.1.0-alpha")]

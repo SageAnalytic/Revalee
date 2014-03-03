@@ -45,7 +45,7 @@ namespace Revalee.SampleSite.Controllers
 			return new HttpStatusCodeResult(HttpStatusCode.OK);
 		}
 
-		[RevaleeClientSettings(ServiceBaseUri = "http://localhost:46200", RequestTimeout = 3000)]
+		[RevaleeClientSettings(ServiceBaseUri = "http://localhost:46200", RequestTimeout = 3000)]	// This attribute is only needed if your need to override the web.config settings
 		public async Task<ActionResult> ScheduleAsync(Uri serviceBaseUri, DateTimeOffset callbackTime, Uri callbackUri, CancellationToken cancellationToken)
 		{
 			DateTimeOffset now = DateTimeOffset.Now;
@@ -65,7 +65,7 @@ namespace Revalee.SampleSite.Controllers
 
 		[AllowAnonymous]
 		[HttpPost]
-		[CallbackAction]
+		[CallbackAction]	// This attribute ensures that only legitimately requested callbacks get handled by this action
 		public ActionResult Callback(Guid callbackId, DateTimeOffset callbackTime, DateTimeOffset currentServiceTime, string id)
 		{
 			DateTimeOffset now = DateTimeOffset.Now;

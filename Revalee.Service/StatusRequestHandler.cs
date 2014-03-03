@@ -21,7 +21,7 @@ namespace Revalee.Service
 					return;
 				}
 
-				string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+				string version = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion;
 				string status = GetStatusDescription();
 				string timestamp = DateTime.UtcNow.ToString("s", CultureInfo.InvariantCulture) + "Z";
 
