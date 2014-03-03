@@ -49,11 +49,10 @@ Usage Examples
 Request a web callback in 1 hour for id=123456
 
 ```c#
-var serviceHost = "localhost";
-var callbackTime = DateTimeOffset.Now.AddHours(1.0);
+var callbackDelay = TimeSpan.FromHours(1.0);
 var callbackUri = new Uri("http://localhost/Home/Callback?id=123456");
 
-Guid callbackId = RevaleeRegistrar.ScheduleCallback(serviceHost, callbackTime, callbackUri);
+Guid callbackId = RevaleeRegistrar.ScheduleCallback(callbackDelay, callbackUri);
 ```
 
 Supported Platforms
