@@ -41,6 +41,12 @@
   <PropertyGroup>
     <StartupObject>Revalee.Service.Revalee</StartupObject>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\Revalee.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Esent.Interop">
       <HintPath>EsePersistence\Esent.Interop.dll</HintPath>
