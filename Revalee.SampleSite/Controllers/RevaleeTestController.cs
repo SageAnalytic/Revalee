@@ -56,7 +56,7 @@ namespace Revalee.SampleSite.Controllers
 			// Normally, this value would be configured in the web.config or by the RevaleeClientSettings attribute.
 			RevaleeClientSettings.ServiceBaseUri = serviceBaseUri;
 
-			Guid callbackId = await this.CallbackAt(callbackUri, callbackTime, cancellationToken);
+			Guid callbackId = await this.CallbackAtAsync(callbackUri, callbackTime, cancellationToken);
 
 			_Log.Add(callbackId, callbackTime, callbackUri, now);
 
