@@ -9,7 +9,6 @@ namespace Revalee.Service
 	internal class StateManager : IDisposable
 	{
 		private readonly WaitingList<RevaleeTask> _AwaitingTasks = new WaitingList<RevaleeTask>(20);
-		private readonly ConcurrentQueue<RevaleeTask> _RemovedTasks = new ConcurrentQueue<RevaleeTask>();
 		private readonly AgingList<Guid> _CancellationList = new AgingList<Guid>();
 		private readonly object _SyncRoot = new object();
 		private Type _PersistenceProviderType;
@@ -42,22 +41,28 @@ namespace Revalee.Service
 			}
 		}
 
+		public void Resume()
+		{
+		}
+
 		public void Suspend()
 		{
-			lock (_SyncRoot)
-			{
-				PurgeRemovedTasks();
-			}
 		}
 
 		public void AddTask(RevaleeTask task)
 		{
+			if (task == null)
+			{
+				throw new ArgumentNullException("task");
+			}
+
 			lock (_SyncRoot)
 			{
 				_AwaitingTasks.Add(task, task.CallbackTime);
+				_PersistenceProvider.AddTask(task);
 			}
 
-			SaveTask(task);
+			Supervisor.Telemetry.IncrementAwaitingTasksValue();
 
 			if (!Supervisor.IsPaused)
 			{
@@ -67,54 +72,52 @@ namespace Revalee.Service
 
 		public RevaleeTask DoleTask()
 		{
-			try
+			lock (_SyncRoot)
 			{
-				lock (_SyncRoot)
+				while (_AwaitingTasks.ContainsOverdue)
 				{
-					while (_AwaitingTasks.ContainsOverdue)
+					RevaleeTask task = _AwaitingTasks.Dequeue();
+
+					if (_CancellationList.Contains(task.CallbackId))
 					{
-						RevaleeTask task = _AwaitingTasks.Dequeue();
-
-						if (_CancellationList.Contains(task.CallbackId))
-						{
-							continue;
-						}
-
-						_RemovedTasks.Enqueue(task);
-
-						if (task.AttemptsRemaining == 0)
-						{
-							continue;
-						}
-
-						return task;
+						continue;
 					}
 
-					return null;
+					if (task.AttemptsRemaining == 0)
+					{
+						_PersistenceProvider.RemoveTask(task);
+						Supervisor.Telemetry.DecrementAwaitingTasksValue();
+						continue;
+					}
+
+					return task;
 				}
+
+				return null;
 			}
-			finally
-			{
-				PurgeRemovedTasks();
-			}
+
 		}
 
 		public void CancelTask(RevaleeTask task)
 		{
+			if (task == null)
+			{
+				throw new ArgumentNullException("task");
+			}
+
 			RevaleeTask storedTask = RetrieveTask(task.CallbackId);
 
 			if (storedTask != null)
 			{
 				if (storedTask.CallbackUrl.ToString().StartsWith(task.CallbackUrl.ToString(), StringComparison.OrdinalIgnoreCase))
 				{
-					_RemovedTasks.Enqueue(storedTask);
-
 					lock (_SyncRoot)
 					{
 						_CancellationList.Add(storedTask.CallbackId, storedTask.CallbackTime);
+						_PersistenceProvider.RemoveTask(task);
 					}
 
-					PurgeRemovedTasks();
+					Supervisor.Telemetry.DecrementAwaitingTasksValue();
 				}
 			}
 		}
@@ -127,6 +130,47 @@ namespace Revalee.Service
 				{
 					return _AwaitingTasks.PeekNextTime();
 				}
+			}
+		}
+
+		public void CompleteTask(RevaleeTask task)
+		{
+			if (task == null)
+			{
+				throw new ArgumentNullException("task");
+			}
+
+			lock (_SyncRoot)
+			{
+				_PersistenceProvider.RemoveTask(task);
+				Supervisor.Telemetry.DecrementAwaitingTasksValue();
+			}
+		}
+
+		public void UpdateTask(RevaleeTask task)
+		{
+			if (task == null)
+			{
+				throw new ArgumentNullException("task");
+			}
+
+			lock (_SyncRoot)
+			{
+				_PersistenceProvider.RemoveTask(task);
+				_PersistenceProvider.AddTask(task);
+			}
+		}
+
+		public void ReenlistTask(RevaleeTask task)
+		{
+			if (task == null)
+			{
+				throw new ArgumentNullException("task");
+			}
+
+			lock (_SyncRoot)
+			{
+				_AwaitingTasks.Add(task, task.CallbackTime);
 			}
 		}
 
@@ -155,30 +199,9 @@ namespace Revalee.Service
 			return recoveredTasks;
 		}
 
-		private void PurgeRemovedTasks()
-		{
-			RevaleeTask taskToDelete;
-			while (_RemovedTasks.TryDequeue(out taskToDelete))
-			{
-				DeleteTask(taskToDelete);
-			}
-		}
-
 		private RevaleeTask RetrieveTask(Guid callbackId)
 		{
 			return _PersistenceProvider.GetTask(callbackId);
-		}
-
-		private void SaveTask(RevaleeTask task)
-		{
-			_PersistenceProvider.AddTask(task);
-			Supervisor.Telemetry.IncrementAwaitingTasksValue();
-		}
-
-		private void DeleteTask(RevaleeTask task)
-		{
-			_PersistenceProvider.RemoveTask(task);
-			Supervisor.Telemetry.DecrementAwaitingTasksValue();
 		}
 
 		public int AwaitingTaskCount

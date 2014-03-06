@@ -48,7 +48,7 @@ namespace Revalee.Service
 						Interlocked.Increment(ref _ConsecutiveDoleFailures);
 
 						// Add the task back to the state manager
-						Supervisor.State.AddTask(task);
+						Supervisor.State.ReenlistTask(task);
 					}
 				}
 			}
@@ -111,11 +111,13 @@ namespace Revalee.Service
 								switch (DetermineResult(response.StatusCode))
 								{
 									case CallbackResult.Success:
+										Supervisor.State.CompleteTask(task);
 										Supervisor.LogEvent(string.Format("Successful callback to {0}. [{1}]", task.CallbackUrl.OriginalString, task.CallbackId), TraceEventType.Verbose);
 										Supervisor.Telemetry.RecordSuccessfulCallback();
 										return;
 
 									case CallbackResult.NonretryableError:
+										Supervisor.State.CompleteTask(task);
 										Supervisor.LogEvent(string.Format("Could not callback {0}. [{1}]", task.CallbackUrl.OriginalString, task.CallbackId), TraceEventType.Error);
 										Supervisor.Telemetry.RecordFailedCallback();
 										return;
@@ -149,6 +151,7 @@ namespace Revalee.Service
 								switch (DetermineResult(failedResponse.StatusCode))
 								{
 									case CallbackResult.NonretryableError:
+										Supervisor.State.CompleteTask(task);
 										Supervisor.LogException(wex, TraceEventType.Error, task.CallbackUrl.OriginalString);
 										Supervisor.Telemetry.RecordFailedCallback();
 										return;
@@ -158,6 +161,7 @@ namespace Revalee.Service
 						catch (Exception ex)
 						{
 							// Nonretryable error
+							Supervisor.State.CompleteTask(task);
 							Supervisor.LogException(ex, TraceEventType.Error, task.CallbackUrl.OriginalString);
 							Supervisor.Telemetry.RecordFailedCallback();
 							return;
@@ -165,6 +169,7 @@ namespace Revalee.Service
 
 						if (task.AttemptsRemaining > 0)
 						{
+							Supervisor.State.UpdateTask(task);
 							Thread.Sleep(1000);
 							// Reschedule another attempt after a retryable failure
 							ProcessTask(task);
@@ -172,6 +177,7 @@ namespace Revalee.Service
 						else
 						{
 							// Out of attempts
+							Supervisor.State.CompleteTask(task);
 							Supervisor.LogEvent(string.Format("Could not callback {0}. [{1}]", task.CallbackUrl.OriginalString, task.CallbackId), TraceEventType.Error);
 							Supervisor.Telemetry.RecordFailedCallback();
 						}
@@ -187,6 +193,7 @@ namespace Revalee.Service
 						switch (DetermineResult(response.StatusCode))
 						{
 							case CallbackResult.NonretryableError:
+								Supervisor.State.CompleteTask(task);
 								Supervisor.LogException(wex, TraceEventType.Error, task.CallbackUrl.OriginalString);
 								Supervisor.Telemetry.RecordFailedCallback();
 								return;
@@ -196,6 +203,7 @@ namespace Revalee.Service
 				catch (Exception ex)
 				{
 					// Nonretryable error
+					Supervisor.State.CompleteTask(task);
 					Supervisor.LogException(ex, TraceEventType.Error, task.CallbackUrl.OriginalString);
 					Supervisor.Telemetry.RecordFailedCallback();
 					return;
@@ -203,11 +211,13 @@ namespace Revalee.Service
 
 				if (task.AttemptsRemaining > 0)
 				{
+					Supervisor.State.UpdateTask(task);
 					Thread.Sleep(1000);
 				}
 				else
 				{
 					// Out of attempts
+					Supervisor.State.CompleteTask(task);
 					Supervisor.LogEvent(string.Format("Could not callback {0}. [{1}]", task.CallbackUrl.OriginalString, task.CallbackId), TraceEventType.Error);
 					Supervisor.Telemetry.RecordFailedCallback();
 				}
