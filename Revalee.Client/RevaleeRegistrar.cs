@@ -26,6 +26,7 @@ SOFTWARE.
 
 #endregion License
 
+using Revalee.Client.Validation;
 using System;
 using System.Diagnostics;
 using System.Globalization;

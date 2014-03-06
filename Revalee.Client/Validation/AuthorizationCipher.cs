@@ -34,7 +34,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 
-namespace Revalee.Client
+namespace Revalee.Client.Validation
 {
 	internal class AuthorizationCipher
 	{

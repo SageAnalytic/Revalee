@@ -31,7 +31,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Web.Hosting;
 
-namespace Revalee.Client
+namespace Revalee.Client.Validation
 {
 	/// <summary>
 	/// Helper methods to cryptographically ensure that callbacks are only processed when legitimately requested by this application.
