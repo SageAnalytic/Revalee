@@ -3,10 +3,12 @@ Revalee
 
 Scheduled callbacks for your web applications
 
+![Workflow Diagram](Diagram.png?raw=true)
+
 Rationale
 ---------
 
-Revalee can simplify your web application's workflow when events are required AFTER the normal handling of a web request. You can write all of your scheduled activities in the same toolset and application as the rest of your back-end code.
+Revalee can simplify your web application's workflow when events are required AFTER the normal handling of a web request. You can write all of your scheduled activities in the same toolset and application as the rest of your web code. No more command line utilities or custom batch jobs. 
 
 Here are some common ways to utilize the power of scheduled callbacks:
 
