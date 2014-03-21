@@ -8,8 +8,7 @@ namespace Revalee.Service
 
 	internal class StateManager : IDisposable
 	{
-		private readonly WaitingList<RevaleeTask> _AwaitingTasks = new WaitingList<RevaleeTask>(20);
-		private readonly AgingList<Guid> _CancellationList = new AgingList<Guid>();
+		private readonly ScheduledDictionary<Guid, RevaleeTask> _AwaitingTasks = new ScheduledDictionary<Guid, RevaleeTask>();
 		private readonly object _SyncRoot = new object();
 		private Type _PersistenceProviderType;
 		private ITaskPersistenceProvider _PersistenceProvider = new NullTaskPersistenceProvider();
@@ -28,14 +27,13 @@ namespace Revalee.Service
 					_PersistenceProvider = (ITaskPersistenceProvider)Activator.CreateInstance(_PersistenceProviderType);
 					_PersistenceProvider.Open(Supervisor.Configuration.TaskPersistenceConnectionString);
 
-					if (_AwaitingTasks.Count == 0)
-					{
-						int recoveredTasks = RecoverTasks();
+					_AwaitingTasks.Clear();
 
-						if (recoveredTasks > 0)
-						{
-							Supervisor.LogEvent(string.Format("Recovered {0:#,##0} tasks from storage.", recoveredTasks), TraceEventType.Information);
-						}
+					int recoveredTasks = RecoverTasks();
+
+					if (recoveredTasks > 0)
+					{
+						Supervisor.LogEvent(string.Format("Recovered {0:#,##0} tasks from storage.", recoveredTasks), TraceEventType.Information);
 					}
 				}
 			}
@@ -56,9 +54,10 @@ namespace Revalee.Service
 				throw new ArgumentNullException("task");
 			}
 
+			_AwaitingTasks.AddOrReplace(task.CallbackId, task, task.CallbackTime);
+
 			lock (_SyncRoot)
 			{
-				_AwaitingTasks.Add(task, task.CallbackTime);
 				_PersistenceProvider.AddTask(task);
 			}
 
@@ -72,30 +71,25 @@ namespace Revalee.Service
 
 		public RevaleeTask DoleTask()
 		{
-			lock (_SyncRoot)
+			RevaleeTask task;
+
+			while (_AwaitingTasks.TryDequeue(out task))
 			{
-				while (_AwaitingTasks.ContainsOverdue)
+				if (task.AttemptsRemaining == 0)
 				{
-					RevaleeTask task = _AwaitingTasks.Dequeue();
-
-					if (_CancellationList.Contains(task.CallbackId))
-					{
-						continue;
-					}
-
-					if (task.AttemptsRemaining == 0)
+					lock (_SyncRoot)
 					{
 						_PersistenceProvider.RemoveTask(task);
-						Supervisor.Telemetry.DecrementAwaitingTasksValue();
-						continue;
 					}
 
-					return task;
+					Supervisor.Telemetry.DecrementAwaitingTasksValue();
+					continue;
 				}
 
-				return null;
+				return task;
 			}
 
+			return null;
 		}
 
 		public void CancelTask(RevaleeTask task)
@@ -105,19 +99,39 @@ namespace Revalee.Service
 				throw new ArgumentNullException("task");
 			}
 
-			RevaleeTask storedTask = RetrieveTask(task.CallbackId);
+			RevaleeTask awaitingTask;
 
-			if (storedTask != null)
+			if (_AwaitingTasks.TryGetValue(task.CallbackId, out awaitingTask))
 			{
-				if (storedTask.CallbackUrl.ToString().StartsWith(task.CallbackUrl.ToString(), StringComparison.OrdinalIgnoreCase))
+				if (awaitingTask.CallbackUrl.ToString().StartsWith(task.CallbackUrl.ToString(), StringComparison.OrdinalIgnoreCase))
 				{
+					RevaleeTask removedTask;
+					bool wasTaskRemoved = _AwaitingTasks.TryRemove(awaitingTask.CallbackId, out removedTask);
+
 					lock (_SyncRoot)
 					{
-						_CancellationList.Add(storedTask.CallbackId, storedTask.CallbackTime);
-						_PersistenceProvider.RemoveTask(task);
+						_PersistenceProvider.RemoveTask(awaitingTask);
 					}
 
-					Supervisor.Telemetry.DecrementAwaitingTasksValue();
+					if (wasTaskRemoved)
+					{
+						Supervisor.Telemetry.DecrementAwaitingTasksValue();
+					}
+				}
+			}
+			else
+			{
+				RevaleeTask storedTask = RetrieveTask(task.CallbackId);
+
+				if (storedTask != null)
+				{
+					if (storedTask.CallbackUrl.ToString().StartsWith(task.CallbackUrl.ToString(), StringComparison.OrdinalIgnoreCase))
+					{
+						lock (_SyncRoot)
+						{
+							_PersistenceProvider.RemoveTask(storedTask);
+						}
+					}
 				}
 			}
 		}
@@ -126,10 +140,14 @@ namespace Revalee.Service
 		{
 			get
 			{
-				lock (_SyncRoot)
+				DateTimeOffset nextDue;
+
+				if (_AwaitingTasks.TryPeekNextDue(out nextDue))
 				{
-					return _AwaitingTasks.PeekNextTime();
+					return nextDue;
 				}
+
+				return null;
 			}
 		}
 
@@ -168,10 +186,7 @@ namespace Revalee.Service
 				throw new ArgumentNullException("task");
 			}
 
-			lock (_SyncRoot)
-			{
-				_AwaitingTasks.Add(task, task.CallbackTime);
-			}
+			_AwaitingTasks.AddOrReplace(task.CallbackId, task, task.CallbackTime);
 		}
 
 		private int RecoverTasks()
@@ -180,7 +195,7 @@ namespace Revalee.Service
 
 			foreach (RevaleeTask task in _PersistenceProvider.ListAllTasks())
 			{
-				_AwaitingTasks.Add(task, task.CallbackTime);
+				_AwaitingTasks.AddOrReplace(task.CallbackId, task, task.CallbackTime);
 				recoveredTasks++;
 			}
 

@@ -61,7 +61,6 @@
   <ItemGroup>
     <Compile Include="AbortableThreadPool.cs" />
     <Compile Include="ApplicationFolderHelper.cs" />
-    <Compile Include="AgingList.cs" />
     <Compile Include="AuthorizationHelper.cs" />
     <Compile Include="CancelRequestHandler.cs" />
     <Compile Include="CommandLineInstaller.cs" />
@@ -69,7 +68,6 @@
     <Compile Include="ConfigurationManager.cs" />
     <Compile Include="EsePersistence\EseTaskPersistenceProvider.cs" />
     <Compile Include="ILoggingProvider.cs" />
-    <Compile Include="KeyedList.cs" />
     <Compile Include="IRequestHandler.cs" />
     <Compile Include="ListenerPrefix.cs" />
     <Compile Include="RevaleeServiceInstaller.cs">
@@ -82,6 +80,7 @@
     <Compile Include="IPartialMatchDictionary.cs" />
     <Compile Include="IPNetwork.cs" />
     <Compile Include="ITaskPersistenceProvider.cs" />
+    <Compile Include="ScheduledDictionary.cs" />
     <Compile Include="TraceListenerLoggingProvider.cs" />
     <Compile Include="NullTaskPersistenceProvider.cs" />
     <Compile Include="TelemetryManager.cs" />
@@ -108,7 +107,6 @@
     <Compile Include="UrlAuthorizationElement.cs" />
     <Compile Include="UrlAuthorizationElementCollection.cs" />
     <Compile Include="UrlMatchDictionary.cs" />
-    <Compile Include="WaitingList.cs" />
     <Compile Include="WorkManager.cs" />
   </ItemGroup>
   <ItemGroup>
