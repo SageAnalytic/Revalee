@@ -309,8 +309,7 @@ namespace Revalee.Client
 		private static HttpWebRequest CreateRequest(string url)
 		{
 			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-			request.AllowAutoRedirect = true;
-			request.MaximumAutomaticRedirections = 10;
+			request.AllowAutoRedirect = false;
 			request.KeepAlive = true;
 			request.Method = WebRequestMethods.Http.Put;
 			request.Pipelined = false;
