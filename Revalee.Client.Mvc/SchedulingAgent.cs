@@ -32,6 +32,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,7 +43,7 @@ namespace Revalee.Client.Mvc
 	{
 		private const int _DefaultRequestTimeoutInMilliseconds = 13000;
 		private const string _RevaleeAuthHttpHeaderName = "Revalee-Auth";
-		private static readonly string _UserAgent = InitializeUserAgent();
+		private static readonly Lazy<HttpClient> _LazyHttpClient = new Lazy<HttpClient>(() => InitializeHttpClient(), LazyThreadSafetyMode.ExecutionAndPublication);
 
 		public static Task<Guid> RequestCallbackAsync(Uri callbackUri, DateTimeOffset callbackTime)
 		{
@@ -65,35 +66,30 @@ namespace Revalee.Client.Mvc
 
 			try
 			{
-				string requestUrl = BuildScheduleRequestUrl(serviceBaseUri, callbackTime.UtcDateTime, callbackUri);
+				var httpClient = _LazyHttpClient.Value;
 
+				Uri requestUri = BuildScheduleRequestUri(serviceBaseUri, callbackTime.UtcDateTime, callbackUri);
 				string authorizationHeaderValue = RequestValidator.Issue(callbackUri);
-
-				using (var httpClient = new HttpClient())
+				using (var requestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri))
 				{
-					httpClient.Timeout = GetWebRequestTimeout();
-					httpClient.MaxResponseContentBufferSize = 1024;
-
-					var requestMessage = new HttpRequestMessage(HttpMethod.Put, requestUrl);
-					requestMessage.Headers.Add("User-Agent", _UserAgent);
-
 					if (!string.IsNullOrEmpty(authorizationHeaderValue))
 					{
 						requestMessage.Headers.Add(_RevaleeAuthHttpHeaderName, authorizationHeaderValue);
 					}
 
-					HttpResponseMessage response = await httpClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false);
-
-					if (response.IsSuccessStatusCode)
+					using (HttpResponseMessage response = await httpClient.SendAsync(requestMessage, cancellationToken).ConfigureAwait(false))
 					{
-						string responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-						return Guid.ParseExact(responseText, "D");
-					}
-					else
-					{
-						throw new RevaleeRequestException(serviceBaseUri, callbackUri,
-							new WebException(string.Format("The remote server returned an error: ({0}) {1}.",
-								(int)response.StatusCode, response.ReasonPhrase), WebExceptionStatus.ProtocolError));
+						if (response.IsSuccessStatusCode)
+						{
+							string responseText = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+							return Guid.ParseExact(responseText, "D");
+						}
+						else
+						{
+							throw new RevaleeRequestException(serviceBaseUri, callbackUri,
+								new WebException(string.Format("The remote server returned an error: ({0}) {1}.",
+									(int)response.StatusCode, response.ReasonPhrase), WebExceptionStatus.ProtocolError));
+						}
 					}
 				}
 			}
@@ -107,9 +103,9 @@ namespace Revalee.Client.Mvc
 			}
 		}
 
-		private static string BuildScheduleRequestUrl(Uri serviceBaseUri, DateTime callbackUtcTime, Uri callbackUri)
+		private static Uri BuildScheduleRequestUri(Uri serviceBaseUri, DateTime callbackUtcTime, Uri callbackUri)
 		{
-			return string.Format(CultureInfo.InvariantCulture, "{0}://{1}/Schedule?CallbackTime={2:s}Z&CallbackUrl={3}", serviceBaseUri.Scheme, serviceBaseUri.Authority, callbackUtcTime, PrepareCallbackUrl(callbackUri));
+			return new Uri(string.Format(CultureInfo.InvariantCulture, "{0}://{1}/Schedule?CallbackTime={2:s}Z&CallbackUrl={3}", serviceBaseUri.Scheme, serviceBaseUri.Authority, callbackUtcTime, PrepareCallbackUrl(callbackUri)), UriKind.Absolute);
 		}
 
 		private static string PrepareCallbackUrl(Uri callbackUri)
@@ -117,12 +113,28 @@ namespace Revalee.Client.Mvc
 			return Uri.EscapeDataString(callbackUri.OriginalString);
 		}
 
-		private static string InitializeUserAgent()
+		private static HttpClient InitializeHttpClient()
+		{
+			var httpHandler = new HttpClientHandler();
+			httpHandler.AllowAutoRedirect = false;
+			httpHandler.MaxRequestContentBufferSize = 1024;
+			httpHandler.UseCookies = false;
+			httpHandler.UseDefaultCredentials = false;
+
+			var httpClient = new HttpClient(httpHandler, true);
+			httpClient.DefaultRequestHeaders.UserAgent.Clear();
+			httpClient.DefaultRequestHeaders.UserAgent.Add(GetUserAgent());
+			httpClient.Timeout = GetWebRequestTimeout();
+			httpClient.MaxResponseContentBufferSize = 1024;
+			return httpClient;
+		}
+
+		private static ProductInfoHeaderValue GetUserAgent()
 		{
 			Assembly callingAssembly = Assembly.GetCallingAssembly();
 			AssemblyName assemblyName = callingAssembly.GetName();
 			FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(callingAssembly.Location);
-			return string.Format(CultureInfo.InvariantCulture, "{0}/{1}", assemblyName.Name, versionInfo.ProductVersion);
+			return new ProductInfoHeaderValue(assemblyName.Name, versionInfo.ProductVersion);
 		}
 
 		private static TimeSpan GetWebRequestTimeout()
