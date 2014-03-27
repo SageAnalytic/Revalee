@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Security;
 using System.Security.AccessControl;
 using System.Security.Principal;
+using System.ServiceProcess;
 
 namespace Revalee.Service
 {
@@ -13,6 +14,9 @@ namespace Revalee.Service
 	{
 		private const string _NetworkServiceAccountSID = "S-1-5-20";
 		private const string _EveryoneAccountSID = "S-1-1-0";
+
+		private readonly TimeSpan _ServiceControllerTimeout = TimeSpan.FromSeconds(15.0);
+		private readonly ConfigurationManager _Configuration = new ConfigurationManager();
 
 		public void Install()
 		{
@@ -25,13 +29,15 @@ namespace Revalee.Service
 			SetDefaultDataFolderPermissions();
 
 #if !DEBUG
-			StartupService();
+			StartService();
 #endif
 		}
 
 		public void Uninstall()
 		{
 			EnsureRequiredPermissions();
+
+			StopService();
 
 			UnRegisterHttpPrefix();
 
@@ -49,7 +55,7 @@ namespace Revalee.Service
 						{
 							case 1:
 								// Windows XP
-								foreach (ListenerPrefix prefix in Supervisor.Configuration.ListenerPrefixes)
+								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
 									LaunchNetShellCommand("httpcfg.exe", string.Format("set urlacl /u {0} /a D:(A;;GX;;;{1})", prefix, GetAclAccountSid()));
 									LaunchNetShellCommand("httpcfg.exe", string.Format("set iplisten -i 0.0.0.0:{0}", prefix.Port));
@@ -58,7 +64,7 @@ namespace Revalee.Service
 
 							case 2:
 								// Windows Server 2003
-								foreach (ListenerPrefix prefix in Supervisor.Configuration.ListenerPrefixes)
+								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
 									LaunchNetShellCommand("httpcfg.exe", string.Format("set urlacl /u {0} /a D:(A;;GX;;;{1})", prefix, GetAclAccountSid()));
 									LaunchNetShellCommand("httpcfg.exe", string.Format("set iplisten -i 0.0.0.0:{0}", prefix.Port));
@@ -72,7 +78,7 @@ namespace Revalee.Service
 						{
 							case 0:
 								// Windows Vista, Windows Server 2008
-								foreach (ListenerPrefix prefix in Supervisor.Configuration.ListenerPrefixes)
+								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
 									LaunchNetShellCommand("netsh", string.Format("http add urlacl url={0} user=\"{1}\"", prefix, GetAclAccountName()));
 									LaunchNetShellCommand("netsh", string.Format("http add iplisten ipaddress=0.0.0.0:{0}", prefix));
@@ -81,7 +87,7 @@ namespace Revalee.Service
 
 							default:
 								// Windows 7, Windows Server 2008 R2, Windows 8, Windows Server 2012
-								foreach (ListenerPrefix prefix in Supervisor.Configuration.ListenerPrefixes)
+								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
 									LaunchNetShellCommand("netsh", string.Format("http add urlacl url={0} user=\"{1}\"", prefix, GetAclAccountName()));
 								}
@@ -91,7 +97,7 @@ namespace Revalee.Service
 
 					default:
 						// default behavior for future versions
-						foreach (ListenerPrefix prefix in Supervisor.Configuration.ListenerPrefixes)
+						foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 						{
 							LaunchNetShellCommand("netsh", string.Format("http add urlacl url={0} user=\"{1}\"", prefix, GetAclAccountName()));
 						}
@@ -111,7 +117,7 @@ namespace Revalee.Service
 						{
 							case 1:
 								// Windows XP
-								foreach (ListenerPrefix prefix in Supervisor.Configuration.ListenerPrefixes)
+								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
 									LaunchNetShellCommand("httpcfg.exe", string.Format("delete urlacl /u {0}", prefix));
 									LaunchNetShellCommand("httpcfg.exe", string.Format("delete iplisten -i 0.0.0.0:{0}", prefix.Port));
@@ -120,7 +126,7 @@ namespace Revalee.Service
 
 							case 2:
 								// Windows Server 2003
-								foreach (ListenerPrefix prefix in Supervisor.Configuration.ListenerPrefixes)
+								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
 									LaunchNetShellCommand("httpcfg.exe", string.Format("delete urlacl /u {0}", prefix));
 									LaunchNetShellCommand("httpcfg.exe", string.Format("delete iplisten -i 0.0.0.0:{0}", prefix.Port));
@@ -134,7 +140,7 @@ namespace Revalee.Service
 						{
 							case 0:
 								// Windows Vista, Windows Server 2008
-								foreach (ListenerPrefix prefix in Supervisor.Configuration.ListenerPrefixes)
+								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
 									LaunchNetShellCommand("netsh", string.Format("http delete urlacl url={0}", prefix));
 									LaunchNetShellCommand("netsh", string.Format("http delete iplisten ipaddress=0.0.0.0:{0}", prefix.Port));
@@ -143,7 +149,7 @@ namespace Revalee.Service
 
 							default:
 								// Windows 7, Windows Server 2008 R2, Windows 8, Windows Server 2012
-								foreach (ListenerPrefix prefix in Supervisor.Configuration.ListenerPrefixes)
+								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
 									LaunchNetShellCommand("netsh", string.Format("http delete urlacl url={0}", prefix));
 								}
@@ -153,7 +159,7 @@ namespace Revalee.Service
 
 					default:
 						// default behavior for future versions
-						foreach (ListenerPrefix prefix in Supervisor.Configuration.ListenerPrefixes)
+						foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 						{
 							LaunchNetShellCommand("netsh", string.Format("http delete urlacl url={0}", prefix));
 						}
@@ -230,9 +236,51 @@ namespace Revalee.Service
 			}
 		}
 
-		private void StartupService()
+		private void StartService()
 		{
-			LaunchNetShellCommand("sc", string.Format("start {0}", GetServiceName()));
+			var sc = new ServiceController(GetServiceName());
+
+			try
+			{
+				if (sc.Status != ServiceControllerStatus.Running && sc.Status != ServiceControllerStatus.StartPending)
+				{
+					sc.Start();
+					sc.WaitForStatus(ServiceControllerStatus.Running, _ServiceControllerTimeout);
+				}
+			}
+			catch (System.ServiceProcess.TimeoutException)
+			{
+				Console.Write(string.Format("Could not start the {0} service.", GetServiceName()));
+			}
+			finally
+			{
+				sc.Close();
+			}
+		}
+
+		private void StopService()
+		{
+			var sc = new ServiceController(GetServiceName());
+
+			try
+			{
+				if (sc.CanStop)
+				{
+					if (sc.Status != ServiceControllerStatus.Stopped && sc.Status != ServiceControllerStatus.StopPending)
+					{
+						sc.Stop();
+						sc.WaitForStatus(ServiceControllerStatus.Stopped, _ServiceControllerTimeout);
+					}
+				}
+			}
+			catch (System.ServiceProcess.TimeoutException)
+			{
+				Console.Write(string.Format("Could not stop the {0} service.", GetServiceName()));
+			}
+			finally
+			{
+				sc.Close();
+			}
 		}
 
 		private void LaunchNetShellCommand(string command, string arguments)

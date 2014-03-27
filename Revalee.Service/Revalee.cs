@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Reflection;
 using System.ServiceProcess;
 
 namespace Revalee.Service
@@ -15,11 +14,13 @@ namespace Revalee.Service
 		protected override void OnContinue()
 		{
 			Supervisor.Resume();
+			base.OnContinue();
 		}
 
 		protected override void OnPause()
 		{
 			Supervisor.Pause();
+			base.OnPause();
 		}
 
 		protected override void OnStart(string[] args)
@@ -27,7 +28,7 @@ namespace Revalee.Service
 			try
 			{
 				Supervisor.Start();
-				Supervisor.LogEvent("Revalee service is active and awaiting requests.", TraceEventType.Information);
+				base.OnStart(args);
 			}
 			catch (Exception ex)
 			{
@@ -47,9 +48,21 @@ namespace Revalee.Service
 			try
 			{
 				Supervisor.Stop();
-				Supervisor.LogEvent("Revalee service has stopped normally.", TraceEventType.Information);
 			}
 			catch { }
+
+			base.OnStop();
+		}
+
+		protected override void OnShutdown()
+		{
+			try
+			{
+				Supervisor.Shutdown();
+			}
+			catch { }
+
+			base.OnShutdown();
 		}
 
 		[MTAThread]

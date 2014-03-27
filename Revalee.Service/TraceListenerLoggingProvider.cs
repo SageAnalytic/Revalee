@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Security;
 using System.Security.Permissions;
 
 namespace Revalee.Service
@@ -12,6 +11,11 @@ namespace Revalee.Service
 		public void WriteEntry(string message, TraceEventType severity)
 		{
 			_Log.TraceSource.TraceEvent(severity, 0, message);
+		}
+
+		public void Flush()
+		{
+			_Log.TraceSource.Flush();
 		}
 
 		[HostProtection(SecurityAction.LinkDemand, Resources = HostProtectionResource.ExternalProcessMgmt)]

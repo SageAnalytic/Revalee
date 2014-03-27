@@ -118,7 +118,12 @@ namespace Revalee.Service
 
 		public static void Stop()
 		{
-			SupervisorSingleton.Instance.StopInternal();
+			SupervisorSingleton.Instance.StopInternal(false);
+		}
+
+		public static void Shutdown()
+		{
+			SupervisorSingleton.Instance.StopInternal(true);
 		}
 
 		public static void Pause()
@@ -138,30 +143,31 @@ namespace Revalee.Service
 
 		public static void LogException(Exception ex, TraceEventType severity)
 		{
-			if (ex == null)
-			{
-				Supervisor.Log.WriteEntry("Abnormal exception occurred.", TraceEventType.Error);
-			}
-			else
-			{
-				Supervisor.Log.WriteEntry(ex.Message, severity);
-			}
+			LogException(ex, severity, null);
 		}
 
 		public static void LogException(Exception ex, TraceEventType severity, string additionalInfo)
 		{
 			if (ex == null)
 			{
-				Supervisor.Log.WriteEntry("Abnormal exception occurred.", TraceEventType.Error);
+				LogExceptionInternal("Abnormal exception occurred.", TraceEventType.Error);
 			}
 			else if (string.IsNullOrWhiteSpace(additionalInfo))
 			{
-				Supervisor.Log.WriteEntry(ex.Message, severity);
+				LogExceptionInternal(ex.Message, severity);
 			}
 			else
 			{
-				Supervisor.Log.WriteEntry(string.Format("{0} [{1}]", ex.Message, additionalInfo), severity);
+				LogExceptionInternal(string.Format("{0} [{1}]", ex.Message, additionalInfo), severity);
 			}
+		}
+
+		private static void LogExceptionInternal(string message, TraceEventType severity)
+		{
+			var traceSource = new TraceSource(System.Reflection.Assembly.GetEntryAssembly().GetName().Name);
+			traceSource.TraceEvent(severity, 0, message);
+			traceSource.Flush();
+			traceSource.Close();
 		}
 
 		private void StartInternal()
@@ -175,11 +181,12 @@ namespace Revalee.Service
 					_ConfigurationManager.Initialize();
 					_StateManager.Initialize();
 					_RequestManager.Activate();
+					_LoggingProvider.WriteEntry("Revalee service is active and awaiting requests.", TraceEventType.Information);
 				}
 			}
 		}
 
-		private void StopInternal()
+		private void StopInternal(bool isShutdown)
 		{
 			lock (_SyncRoot)
 			{
@@ -191,6 +198,17 @@ namespace Revalee.Service
 					_TimeManager.Stop();
 					_WorkManager.Halt();
 					_StateManager.Suspend();
+
+					if (isShutdown)
+					{
+						_LoggingProvider.WriteEntry("Revalee service has stopped normally due to a system shutdown.", TraceEventType.Information);
+					}
+					else
+					{
+						_LoggingProvider.WriteEntry("Revalee service has stopped normally.", TraceEventType.Information);
+					}
+
+					_LoggingProvider.Flush();
 				}
 			}
 		}
@@ -205,6 +223,8 @@ namespace Revalee.Service
 					_TimeManager.Stop();
 				}
 			}
+
+			_LoggingProvider.Flush();
 		}
 
 		private void ResumeInternal()
@@ -222,7 +242,7 @@ namespace Revalee.Service
 
 		private void Cleanup()
 		{
-			this.StopInternal();
+			this.StopInternal(true);
 
 			if (_RequestManager != null)
 			{
