@@ -1,14 +1,23 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Reflection;
 using System.ServiceProcess;
 
 namespace Revalee.Service
 {
 	partial class Revalee : ServiceBase
 	{
+		private const int SERVICE_ACCEPT_PRESHUTDOWN = 0x100;
+		private const int SERVICE_CONTROL_PRESHUTDOWN = 0xf;
+
 		public Revalee()
 		{
 			InitializeComponent();
+
+			if (Environment.OSVersion.Version.Major >= 6)
+			{
+				AcceptPreShutdown();
+			}
 		}
 
 		protected override void OnContinue()
@@ -63,7 +72,26 @@ namespace Revalee.Service
 			catch { }
 
 			base.OnShutdown();
+
+			this.Stop();
 		}
+
+		protected override void OnCustomCommand(int command)
+		{
+			if (command == SERVICE_CONTROL_PRESHUTDOWN)
+			{
+				try
+				{
+					Supervisor.Shutdown();
+				}
+				catch { }
+			}
+
+			base.OnCustomCommand(command);
+
+			this.Stop();
+		}
+
 
 		[MTAThread]
 		public static void Main()
@@ -157,6 +185,15 @@ namespace Revalee.Service
 			}
 			catch
 			{ }
+		}
+
+		private void AcceptPreShutdown()
+		{
+			FieldInfo acceptedCommandsFieldInfo = typeof(ServiceBase).GetField("acceptedCommands", BindingFlags.Instance | BindingFlags.NonPublic);
+			if (acceptedCommandsFieldInfo != null)
+			{
+				acceptedCommandsFieldInfo.SetValue(this, ((int)acceptedCommandsFieldInfo.GetValue(this)) | SERVICE_ACCEPT_PRESHUTDOWN);
+			}
 		}
 	}
 }
