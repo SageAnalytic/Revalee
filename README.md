@@ -13,8 +13,8 @@ Revalee can simplify your web application's workflow when events are required AF
 Here are some common ways to utilize the power of scheduled callbacks:
 
 *   Sending reminder email messages.
-*   Running automated reports.
-*   Scheduling maintenance functions.
+*   Running recurring automated reports.
+*   Scheduling daily maintenance functions.
 *   Expiring accounts or subscriptions.
 *   Canceling incomplete transactions.
 *   Consolidating multiple notification messages.
@@ -48,13 +48,22 @@ Install-Package Revalee.Client.Mvc
 Usage Examples
 --------------
 
-Request a web callback in 1 hour for id=123456
+Request a one-time web callback in 1 hour for id=123456
 
 ```c#
 var callbackDelay = TimeSpan.FromHours(1.0);
 var callbackUri = new Uri("http://localhost/Home/Callback?id=123456");
 
 Guid callbackId = RevaleeRegistrar.ScheduleCallback(callbackDelay, callbackUri);
+```
+
+Request a recurring web callback every night at 3:30 AM
+
+```c#
+var manifest = RecurringTasks.RecurringTaskModule.GetManifest();
+var callbackUri = new Uri("http://localhost/Recurring/Nightly");
+
+manifest.AddDailyTask(3, 30, callbackUri);
 ```
 
 Supported Platforms

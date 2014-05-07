@@ -45,6 +45,11 @@ namespace Revalee.Client.Mvc
 		{
 			get
 			{
+				if (_ServiceBaseUri == null)
+				{
+					return null;
+				}
+
 				return _ServiceBaseUri.ToString();
 			}
 			set
@@ -60,8 +65,8 @@ namespace Revalee.Client.Mvc
 			}
 		}
 
-		/// <summary>Gets or sets the timeout of callback requests in milliseconds, a value of -1 indicates a default timeout period.</summary>
-		/// <returns>The timeout of callback requests in milliseconds, a value of -1 indicates a default timeout period.</returns>
+		/// <summary>Gets or sets the timeout of callback requests in milliseconds, a value of 0 indicates a default timeout period, a value of -1 indicates an infinite timeout period.</summary>
+		/// <returns>The timeout of callback requests in milliseconds, a value of 0 indicates a default timeout period, a value of -1 indicates an infinite timeout period.</returns>
 		public int RequestTimeout
 		{
 			get
@@ -72,16 +77,17 @@ namespace Revalee.Client.Mvc
 				}
 				else
 				{
-					return -1;
+					return 0;
 				}
 			}
 			set
 			{
 				if (value < -1)
 				{
-					throw new ArgumentOutOfRangeException("RequestTimeout");
+					throw new ArgumentOutOfRangeException("value");
 				}
-				else if (value == -1)
+
+				if (value == 0)
 				{
 					_RequestTimeout = null;
 				}
@@ -119,7 +125,7 @@ namespace Revalee.Client.Mvc
 
 			if (_RequestTimeout.HasValue)
 			{
-				RevaleeClientSettings.RequestTimeout = _RequestTimeout.Value;
+				RevaleeClientSettings.RequestTimeout = _RequestTimeout;
 			}
 
 			if (_ServiceBaseUri != null)

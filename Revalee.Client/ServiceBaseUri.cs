@@ -27,10 +27,12 @@ SOFTWARE.
 #endregion License
 
 using System;
+using System.Runtime.Serialization;
 
 namespace Revalee.Client
 {
 	/// <summary>Creates a <see cref="T:System.Uri"/> for use as the base Uri for the Revalee service.</summary>
+	[Serializable]
 	public class ServiceBaseUri : Uri
 	{
 		private const string _DefaultServiceScheme = "http";
@@ -51,6 +53,11 @@ namespace Revalee.Client
 		/// <exception cref="T:System.UriFormatException"><paramref name="serviceHost" /> is not valid as a service base Uri for the Revalee service.</exception>
 		public ServiceBaseUri(string serviceHost)
 			: base(BuildSpecifiedServiceBase(serviceHost), UriKind.Absolute)
+		{
+		}
+
+		protected ServiceBaseUri(SerializationInfo info, StreamingContext context)
+			: base(info, context)
 		{
 		}
 
@@ -93,7 +100,6 @@ namespace Revalee.Client
 						&& proxyUri.IsAbsoluteUri
 						&& (Uri.UriSchemeHttp.Equals(proxyUri.Scheme) || Uri.UriSchemeHttps.Equals(proxyUri.Scheme)))
 					{
-
 						if (proxyUri.IsDefaultPort)
 						{
 							if (Uri.UriSchemeHttp.Equals(proxyUri.Scheme, StringComparison.OrdinalIgnoreCase)

@@ -104,7 +104,7 @@ namespace Revalee.Service
 				throw new ArgumentNullException("key");
 			}
 
-			lock (_InternalLock)
+			lock (_InternalLock)	// Write operation
 			{
 				int heapIndex = FindHeapIndexInHashtable(key);
 
@@ -133,7 +133,7 @@ namespace Revalee.Service
 				throw new ArgumentNullException("key");
 			}
 
-			lock (_InternalLock)
+			lock (_InternalLock)	// Write operation
 			{
 				int heapIndex = FindHeapIndexInHashtable(key);
 
@@ -166,7 +166,7 @@ namespace Revalee.Service
 					throw new ArgumentNullException("key");
 				}
 
-				lock (_InternalLock)
+				lock (_InternalLock)	// Read operation
 				{
 					int heapIndex = FindHeapIndexInHashtable(key);
 
@@ -187,7 +187,7 @@ namespace Revalee.Service
 				throw new ArgumentNullException("key");
 			}
 
-			lock (_InternalLock)
+			lock (_InternalLock)	// Read operation
 			{
 				int heapIndex = FindHeapIndexInHashtable(key);
 
@@ -209,7 +209,7 @@ namespace Revalee.Service
 				throw new ArgumentNullException("key");
 			}
 
-			lock (_InternalLock)
+			lock (_InternalLock)	// Write operation
 			{
 				int heapIndex = FindHeapIndexInHashtable(key);
 
@@ -233,9 +233,8 @@ namespace Revalee.Service
 
 		public int RemoveAllOverdue()
 		{
-			lock (_InternalLock)
+			lock (_InternalLock)	// Write operation
 			{
-				_Version++;
 				int removedEntries = PruneOverdueEntries();
 
 				if (removedEntries > 0)
@@ -249,7 +248,7 @@ namespace Revalee.Service
 
 		public void Clear()
 		{
-			lock (_InternalLock)
+			lock (_InternalLock)	// Write operation
 			{
 				_Version++;
 				InitializeHashtable(_InitialCapacity);
@@ -265,7 +264,7 @@ namespace Revalee.Service
 				throw new ArgumentNullException("key");
 			}
 
-			lock (_InternalLock)
+			lock (_InternalLock)	// Read operation
 			{
 				if (HashtableCount == 0)
 				{
@@ -282,9 +281,12 @@ namespace Revalee.Service
 		{
 			get
 			{
-				lock (_InternalLock)
+				lock (_InternalLock)	// Read with possible write operation
 				{
-					PruneDeletedEntries();
+					if (IsDeletedEntryAtHead)
+					{
+						PruneDeletedEntries();
+					}
 
 					if (HashtableCount == 0)
 					{
@@ -311,9 +313,12 @@ namespace Revalee.Service
 
 		public bool TryPeek(out TValue result)
 		{
-			lock (_InternalLock)
+			lock (_InternalLock)	// Read with possible write operation
 			{
-				PruneDeletedEntries();
+				if (IsDeletedEntryAtHead)
+				{
+					PruneDeletedEntries();
+				}
 
 				if (HashtableCount == 0)
 				{
@@ -328,9 +333,12 @@ namespace Revalee.Service
 
 		public bool TryPeekNextDue(out DateTimeOffset result)
 		{
-			lock (_InternalLock)
+			lock (_InternalLock)	// Read with possible write operation
 			{
-				PruneDeletedEntries();
+				if (IsDeletedEntryAtHead)
+				{
+					PruneDeletedEntries();
+				}
 
 				if (HashtableCount == 0)
 				{
@@ -393,9 +401,12 @@ namespace Revalee.Service
 			long startingVersion;
 			int startingSize;
 
-			lock (_InternalLock)
+			lock (_InternalLock)	// Read with possible write operation
 			{
-				PruneDeletedEntries();
+				if (IsDeletedEntryAtHead)
+				{
+					PruneDeletedEntries();
+				}
 
 				if (!_IsHeapOrdered)
 				{
@@ -433,15 +444,10 @@ namespace Revalee.Service
 		{
 			get
 			{
+				// Optimistic concurrency for this idempotent and inexpensive operation 
 				if (_KeyEnumerable == null)
 				{
-					lock (_InternalLock)
-					{
-						if (_KeyEnumerable == null)
-						{
-							_KeyEnumerable = new ScheduledDictionary<TKey, TValue>.KeyEnumerable(this);
-						}
-					}
+					_KeyEnumerable = new ScheduledDictionary<TKey, TValue>.KeyEnumerable(this);
 				}
 
 				return _KeyEnumerable;
@@ -452,15 +458,10 @@ namespace Revalee.Service
 		{
 			get
 			{
+				// Optimistic concurrency for this idempotent and inexpensive operation 
 				if (_ValueEnumerable == null)
 				{
-					lock (_InternalLock)
-					{
-						if (_ValueEnumerable == null)
-						{
-							_ValueEnumerable = new ScheduledDictionary<TKey, TValue>.ValueEnumerable(this);
-						}
-					}
+					_ValueEnumerable = new ScheduledDictionary<TKey, TValue>.ValueEnumerable(this);
 				}
 
 				return _ValueEnumerable;
@@ -471,15 +472,10 @@ namespace Revalee.Service
 		{
 			get
 			{
+				// Optimistic concurrency for this idempotent and inexpensive operation 
 				if (_OverdueValueEnumerable == null)
 				{
-					lock (_InternalLock)
-					{
-						if (_OverdueValueEnumerable == null)
-						{
-							_OverdueValueEnumerable = new ScheduledDictionary<TKey, TValue>.OverdueValueEnumerable(this);
-						}
-					}
+					_OverdueValueEnumerable = new ScheduledDictionary<TKey, TValue>.OverdueValueEnumerable(this);
 				}
 
 				return _OverdueValueEnumerable;
@@ -488,9 +484,12 @@ namespace Revalee.Service
 
 		public TValue[] ToArray()
 		{
-			lock (_InternalLock)
+			lock (_InternalLock)	// Read with possible write operation
 			{
-				PruneDeletedEntries();
+				if (IsDeletedEntryAtHead)
+				{
+					PruneDeletedEntries();
+				}
 
 				int currentHeapSize = HeapCount;
 
@@ -527,9 +526,12 @@ namespace Revalee.Service
 				throw new ArgumentOutOfRangeException("index");
 			}
 
-			lock (_InternalLock)
+			lock (_InternalLock)	// Read with possible write operation
 			{
-				PruneDeletedEntries();
+				if (IsDeletedEntryAtHead)
+				{
+					PruneDeletedEntries();
+				}
 
 				int currentHeapSize = HeapCount;
 
@@ -591,7 +593,7 @@ namespace Revalee.Service
 
 		private bool TryRemoveHeapEntry(out HeapEntry result)
 		{
-			lock (_InternalLock)
+			lock (_InternalLock)	// Write operation
 			{
 				PruneDeletedEntries();
 
@@ -628,11 +630,19 @@ namespace Revalee.Service
 			}
 		}
 
+		private bool IsDeletedEntryAtHead
+		{
+			get
+			{
+				return (HeapCount > 0 && _HeapEntries[0].IsDeleted);
+			}
+		}
+
 		private void PruneDeletedEntries()
 		{
 			bool deletedEntriesRemoved = false;
 
-			while (HeapCount > 0 && _HeapEntries[0].IsDeleted)
+			while (IsDeletedEntryAtHead)
 			{
 				if (!deletedEntriesRemoved)
 				{
@@ -680,7 +690,7 @@ namespace Revalee.Service
 			bool deletedEntriesRemoved = false;
 			int overdueEntriesRemoved = 0;
 
-			while (HeapCount > 0 && (_HeapEntries[0].IsDeleted || _HeapEntries[0].IsOverdue))
+			while (HeapCount > 0)
 			{
 				if (_HeapEntries[0].IsDeleted)
 				{
@@ -698,6 +708,10 @@ namespace Revalee.Service
 					}
 
 					overdueEntriesRemoved++;
+				}
+				else
+				{
+					break;
 				}
 
 				int lastHeapIndex = HeapCount - 1;
@@ -1420,9 +1434,12 @@ namespace Revalee.Service
 				long startingVersion;
 				int startingSize;
 
-				lock (_Dictionary._InternalLock)
+				lock (_Dictionary._InternalLock)	// Read with possible write operation
 				{
-					_Dictionary.PruneDeletedEntries();
+					if (_Dictionary.IsDeletedEntryAtHead)
+					{
+						_Dictionary.PruneDeletedEntries();
+					}
 
 					if (!_Dictionary._IsHeapOrdered)
 					{
@@ -1480,9 +1497,12 @@ namespace Revalee.Service
 				long startingVersion;
 				int startingSize;
 
-				lock (_Dictionary._InternalLock)
+				lock (_Dictionary._InternalLock)	// Read with possible write operation
 				{
-					_Dictionary.PruneDeletedEntries();
+					if (_Dictionary.IsDeletedEntryAtHead)
+					{
+						_Dictionary.PruneDeletedEntries();
+					}
 
 					if (!_Dictionary._IsHeapOrdered)
 					{

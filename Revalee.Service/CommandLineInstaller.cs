@@ -10,7 +10,7 @@ using System.ServiceProcess;
 
 namespace Revalee.Service
 {
-	internal class CommandLineInstaller
+	internal class CommandLineInstaller : IDisposable
 	{
 		private const string _NetworkServiceAccountSID = "S-1-5-20";
 		private const string _EveryoneAccountSID = "S-1-1-0";
@@ -330,6 +330,20 @@ namespace Revalee.Service
 		private static string GetServiceName()
 		{
 			return Assembly.GetExecutingAssembly().GetName().Name;
+		}
+
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				_Configuration.Dispose();
+			}
 		}
 	}
 }

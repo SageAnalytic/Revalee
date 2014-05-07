@@ -97,70 +97,83 @@ namespace Revalee.Service
 		public static void Main()
 		{
 			string[] commandLineArgs = Environment.GetCommandLineArgs();
-			if (commandLineArgs != null && commandLineArgs.Length == 2)
+
+			if (commandLineArgs == null || commandLineArgs.Length == 1)
+			{
+				if (Environment.UserInteractive)
+				{
+					RunAsInteractive();
+				}
+				else
+				{
+					RunAsService();
+				}
+			}
+			else if (commandLineArgs.Length == 2)
 			{
 				if (commandLineArgs[1] == "-?" || string.Equals(commandLineArgs[1], "-help", StringComparison.OrdinalIgnoreCase))
 				{
 					InteractiveExecution.Help();
-					return;
 				}
 				else if (string.Equals(commandLineArgs[1], "-install", StringComparison.OrdinalIgnoreCase))
 				{
 					try
 					{
-						CommandLineInstaller installer = new CommandLineInstaller();
-						installer.Install();
+						using (var installer = new CommandLineInstaller())
+						{
+							installer.Install();
+						}
 					}
 					catch (Exception ex)
 					{
-						Environment.ExitCode = 1;
 						Console.WriteLine();
 						Console.WriteLine(ex.Message);
+						Environment.ExitCode = 1;
 					}
-
-					return;
 				}
 				else if (string.Equals(commandLineArgs[1], "-uninstall", StringComparison.OrdinalIgnoreCase))
 				{
 					try
 					{
-						CommandLineInstaller installer = new CommandLineInstaller();
-						installer.Uninstall();
+						using (var installer = new CommandLineInstaller())
+						{
+							installer.Uninstall();
+						}
 					}
 					catch (Exception ex)
 					{
-						Environment.ExitCode = 1;
 						Console.WriteLine();
 						Console.WriteLine(ex.Message);
+						Environment.ExitCode = 1;
 					}
-
-					return;
 				}
 				else if (string.Equals(commandLineArgs[1], "-interactive", StringComparison.OrdinalIgnoreCase))
 				{
-					try
-					{
-						InteractiveExecution.Run();
-					}
-					catch (Exception ex)
-					{
-						try
-						{
-							Supervisor.LogException(ex, TraceEventType.Critical, "Service terminating on error");
-						}
-						catch { }
-
-						Environment.ExitCode = 1;
-					}
-					return;
+					RunAsInteractive();
 				}
 				else if (string.Equals(commandLineArgs[1], "-export", StringComparison.OrdinalIgnoreCase))
 				{
 					TaskExporter.DumpToConsole();
-					return;
+				}
+				else
+				{
+					InteractiveExecution.Help();
+					Console.WriteLine();
+					Console.WriteLine("Error: Invalid switch `{0}`.", commandLineArgs[1]);
+					Environment.ExitCode = 1;
 				}
 			}
+			else
+			{
+				InteractiveExecution.Help();
+				Console.WriteLine();
+				Console.WriteLine("Error: Invalid command line arguments.");
+				Environment.ExitCode = 1;
+			}
+		}
 
+		private static void RunAsService()
+		{
 			try
 			{
 				AppDomain.CurrentDomain.UnhandledException += ServiceCallbackUnhandledExceptionHandler;
@@ -174,6 +187,24 @@ namespace Revalee.Service
 				}
 				catch
 				{ }
+			}
+		}
+
+		private static void RunAsInteractive()
+		{
+			try
+			{
+				InteractiveExecution.Run();
+			}
+			catch (Exception ex)
+			{
+				try
+				{
+					Supervisor.LogException(ex, TraceEventType.Critical, "Service terminating on error");
+				}
+				catch { }
+
+				Environment.ExitCode = 1;
 			}
 		}
 

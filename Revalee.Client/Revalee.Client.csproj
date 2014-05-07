@@ -45,6 +45,28 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AsyncRevaleeRegistrar.cs" />
+    <Compile Include="Configuration\ClientSettingsConfigurationElement.cs" />
+    <Compile Include="Configuration\RevaleeSection.cs" />
+    <Compile Include="RecurringTasks\ActivationState.cs" />
+    <Compile Include="RecurringTasks\CallbackDetails.cs" />
+    <Compile Include="RecurringTasks\CallbackRequest.cs" />
+    <Compile Include="RecurringTasks\ConfiguredTask.cs" />
+    <Compile Include="RecurringTasks\DeactivationEventArgs.cs" />
+    <Compile Include="RecurringTasks\EnumConfigurationConverter.cs" />
+    <Compile Include="RecurringTasks\IClockSource.cs" />
+    <Compile Include="RecurringTasks\ImmutableTaskCollection.cs" />
+    <Compile Include="RecurringTasks\IRecurringTask.cs" />
+    <Compile Include="RecurringTasks\ITaskCollection.cs" />
+    <Compile Include="RecurringTasks\ITaskManifest.cs" />
+    <Compile Include="RecurringTasks\PeriodicityType.cs" />
+    <Compile Include="RecurringTasks\SystemClock.cs" />
+    <Compile Include="RecurringTasks\TaskBuilder.cs" />
+    <Compile Include="RecurringTasks\TaskConfigurationCollection.cs" />
+    <Compile Include="RecurringTasks\TaskConfigurationElement.cs" />
+    <Compile Include="RecurringTasks\TaskManifest.cs" />
+    <Compile Include="RecurringTasks\RecurringTaskModule.cs" />
+    <Compile Include="RecurringTasks\RequestAnalysis.cs" />
+    <Compile Include="Configuration\UrlValidatorAttribute.cs" />
     <Compile Include="Validation\AuthorizationCipher.cs" />
     <Compile Include="RevaleeClientSettings.cs" />
     <Compile Include="Validation\RequestValidator.cs" />

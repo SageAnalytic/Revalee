@@ -77,6 +77,19 @@ namespace Revalee.SampleSite.Controllers
 			return new HttpStatusCodeResult(HttpStatusCode.OK);
 		}
 
+		[HttpPost]
+		public ActionResult Recurring()
+		{
+			if (Revalee.Client.RecurringTasks.RecurringTaskModule.IsProcessingRecurringCallback)
+			{
+				Revalee.Client.RecurringTasks.CallbackDetails details = Revalee.Client.RecurringTasks.RecurringTaskModule.RecurringCallbackDetails;
+
+				System.Diagnostics.Debug.WriteLine("Recurring event triggered at {0:F}, requested at {1:F} by {2}.", DateTime.Now, details.CallbackTime.LocalDateTime, details.CallbackId);
+			}
+
+			return new HttpStatusCodeResult(HttpStatusCode.OK);
+		}
+
 		protected override void OnException(ExceptionContext filterContext)
 		{
 			if (filterContext != null && filterContext.Exception != null)

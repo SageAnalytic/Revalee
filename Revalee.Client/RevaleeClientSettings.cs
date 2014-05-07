@@ -26,6 +26,7 @@ SOFTWARE.
 
 #endregion License
 
+using Revalee.Client.Configuration;
 using System;
 using System.Configuration;
 using System.Web;
@@ -56,15 +57,27 @@ namespace Revalee.Client
 					}
 				}
 
-				string storedValue = ConfigurationManager.AppSettings[_AuthorizationKeyAppSettingsKey];
+				RevaleeSection configSection = RevaleeSection.GetConfiguration();
 
-				if (string.IsNullOrEmpty(storedValue))
+				if (configSection != null && configSection.ClientSettings != null)
+				{
+					string configuredValue = configSection.ClientSettings.AuthorizationKey;
+
+					if (!string.IsNullOrEmpty(configuredValue))
+					{
+						return configuredValue;
+					}
+				}
+
+				string appSettingsValue = ConfigurationManager.AppSettings[_AuthorizationKeyAppSettingsKey];
+
+				if (string.IsNullOrEmpty(appSettingsValue))
 				{
 					return null;
 				}
 				else
 				{
-					return storedValue;
+					return appSettingsValue;
 				}
 			}
 		}
@@ -85,25 +98,37 @@ namespace Revalee.Client
 					{
 						int overrideInt = (int)overrideValue;
 
-						if (overrideInt >= 0)
+						if (overrideInt > 0 || overrideInt == -1)
 						{
 							return overrideInt;
 						}
 					}
 				}
 
-				string storedValue = ConfigurationManager.AppSettings[_RequestTimeoutAppSettingsKey];
+				RevaleeSection configSection = RevaleeSection.GetConfiguration();
 
-				if (string.IsNullOrEmpty(storedValue))
+				if (configSection != null && configSection.ClientSettings != null)
+				{
+					int configuredValue = configSection.ClientSettings.RequestTimeout;
+
+					if (configuredValue > 0 || configuredValue == -1)
+					{
+						return configuredValue;
+					}
+				}
+
+				string appSettingsValue = ConfigurationManager.AppSettings[_RequestTimeoutAppSettingsKey];
+
+				if (string.IsNullOrEmpty(appSettingsValue))
 				{
 					return null;
 				}
 
 				int storedInt;
 
-				if (int.TryParse(storedValue, out storedInt))
+				if (int.TryParse(appSettingsValue, out storedInt))
 				{
-					if (storedInt >= 0)
+					if (storedInt > 0 || storedInt == -1)
 					{
 						return storedInt;
 					}
@@ -113,10 +138,16 @@ namespace Revalee.Client
 			}
 			set
 			{
+				if (value.HasValue && value.Value < -1)
+				{
+					throw new ArgumentOutOfRangeException("value");
+				}
+
 				HttpContext context = HttpContext.Current;
+
 				if (context != null)
 				{
-					if (value.HasValue && value.Value >= 0)
+					if (value.HasValue && (value.Value > 0 || value.Value == -1))
 					{
 						context.Items[_RequestTimeoutAppSettingsKey] = value;
 					}
@@ -151,18 +182,30 @@ namespace Revalee.Client
 					}
 				}
 
-				string storedValue = ConfigurationManager.AppSettings[_ServiceBaseUriAppSettingsKey];
+				RevaleeSection configSection = RevaleeSection.GetConfiguration();
 
-				if (string.IsNullOrWhiteSpace(storedValue))
+				if (configSection != null && configSection.ClientSettings != null)
+				{
+					Uri configuredValue = configSection.ClientSettings.ServiceBaseUri;
+
+					if (configuredValue != null)
+					{
+						return configuredValue;
+					}
+				}
+
+				string appSettingsValue = ConfigurationManager.AppSettings[_ServiceBaseUriAppSettingsKey];
+
+				if (string.IsNullOrWhiteSpace(appSettingsValue))
 				{
 					return null;
 				}
 
-				ServiceBaseUri storedUri;
+				ServiceBaseUri appSettingsUri;
 
-				if (RevaleeClientLibrary::ServiceBaseUri.TryCreate(storedValue, out storedUri))
+				if (RevaleeClientLibrary::ServiceBaseUri.TryCreate(appSettingsValue, out appSettingsUri))
 				{
-					return storedUri;
+					return appSettingsUri;
 				}
 
 				return null;

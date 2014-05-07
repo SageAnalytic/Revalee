@@ -30,7 +30,6 @@ namespace Revalee.Service
 
 			try
 			{
-
 				Supervisor.Start();
 			}
 			catch (Exception ex)
@@ -45,39 +44,29 @@ namespace Revalee.Service
 
 			try
 			{
-
 				if (Supervisor.Configuration.ListenerPrefixes.Length == 0)
 				{
-					Supervisor.LogEvent("Revalee service is active but is not listening for requests.", TraceEventType.Warning);
 					Console.WriteLine("Revalee service is running but is not listening for callback requests.");
-					Console.WriteLine("Press any key to terminate.");
 				}
 				else if (Supervisor.Configuration.ListenerPrefixes.Length == 1)
 				{
-					Supervisor.LogEvent("Revalee service is active and awaiting requests.", TraceEventType.Information);
 					Console.WriteLine("Revalee service is running and listening on {0}.", Supervisor.Configuration.ListenerPrefixes[0]);
-					Console.WriteLine("Press any key to terminate.");
 				}
 				else
 				{
-					Supervisor.LogEvent("Revalee service is active and awaiting requests.", TraceEventType.Information);
 					Console.WriteLine("Revalee service is running and listening on:");
 
 					foreach (ListenerPrefix prefix in Supervisor.Configuration.ListenerPrefixes)
 					{
 						Console.WriteLine("    {0}", prefix);
 					}
-
-					Console.WriteLine("Press any key to terminate.");
 				}
 
+				Console.WriteLine("Press any key to terminate.");
 				Console.ReadKey(true);
 				Console.WriteLine();
 				Console.WriteLine("Service stopping...");
 				Console.WriteLine();
-
-
-				Supervisor.LogEvent("Revalee service has stopped normally.", TraceEventType.Information);
 			}
 			finally
 			{
@@ -95,7 +84,6 @@ namespace Revalee.Service
 			Console.WriteLine("                   {0}", GetCopyrightInformation());
 			Console.WriteLine();
 			Console.WriteLine("Switches:");
-			Console.WriteLine("    -interactive   Run the service from the command line.");
 			Console.WriteLine("    -install       Installs the service into the Windows Service Manager.");
 			Console.WriteLine("    -uninstall     Uninstalls the service from the Windows Service Manager.");
 			Console.WriteLine("    -help          Displays this information.");
@@ -140,8 +128,10 @@ namespace Revalee.Service
 
 				if (keypress.Key == ConsoleKey.Y)
 				{
-					CommandLineInstaller installer = new CommandLineInstaller();
-					installer.Install();
+					using (var installer = new CommandLineInstaller())
+					{
+						installer.Install();
+					}
 
 					Console.WriteLine();
 					Console.WriteLine();

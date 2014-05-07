@@ -143,7 +143,7 @@ namespace Revalee.Client
 
 			if (Guid.Empty.Equals(trackingGuid))
 			{
-				throw new WebException("Service did not return a valid tracking number.");
+				throw new RevaleeRequestException(serviceBaseUri, callbackUri, new InvalidOperationException("Service did not return a valid tracking number."));
 			}
 
 			return trackingGuid;
