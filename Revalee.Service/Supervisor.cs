@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.ConstrainedExecution;
 
 namespace Revalee.Service
@@ -164,7 +165,7 @@ namespace Revalee.Service
 
 		private static void LogExceptionInternal(string message, TraceEventType severity)
 		{
-			var traceSource = new TraceSource(System.Reflection.Assembly.GetEntryAssembly().GetName().Name);
+			var traceSource = new TraceSource(Assembly.GetEntryAssembly().GetName().Name);
 			traceSource.TraceEvent(severity, 0, message);
 			traceSource.Flush();
 			traceSource.Close();
@@ -181,7 +182,7 @@ namespace Revalee.Service
 					_ConfigurationManager.Initialize();
 					_StateManager.Initialize();
 					_RequestManager.Activate();
-					_LoggingProvider.WriteEntry("Revalee service is active and awaiting requests.", TraceEventType.Information);
+					_LoggingProvider.WriteEntry("Revalee service is active and awaiting requests." + GetProductVersionTag(), TraceEventType.Information);
 				}
 			}
 		}
@@ -201,11 +202,11 @@ namespace Revalee.Service
 
 					if (isShutdown)
 					{
-						_LoggingProvider.WriteEntry("Revalee service has stopped normally due to a system shutdown.", TraceEventType.Information);
+						_LoggingProvider.WriteEntry("Revalee service has stopped normally due to a system shutdown." + GetProductVersionTag(), TraceEventType.Information);
 					}
 					else
 					{
-						_LoggingProvider.WriteEntry("Revalee service has stopped normally.", TraceEventType.Information);
+						_LoggingProvider.WriteEntry("Revalee service has stopped normally." + GetProductVersionTag(), TraceEventType.Information);
 					}
 
 					_LoggingProvider.Flush();
@@ -303,6 +304,18 @@ namespace Revalee.Service
 		{
 			this.Cleanup();
 			GC.SuppressFinalize(this);
+		}
+
+		private static string GetProductVersionTag()
+		{
+			string assemblyProductVersion = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location).ProductVersion;
+
+			if (string.IsNullOrEmpty(assemblyProductVersion))
+			{
+				return string.Empty;
+			}
+
+			return string.Concat(" (v", assemblyProductVersion, ")");
 		}
 
 		private static class SupervisorSingleton
