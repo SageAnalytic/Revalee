@@ -30,19 +30,25 @@ using System;
 
 namespace Revalee.Client.RecurringTasks
 {
-	public class CallbackDetails
+	/// <summary>
+	/// The details of a callback initiated by a recurring task.
+	/// </summary>
+	public class RecurringTaskCallbackDetails
 	{
 		private string _CallbackId;
 		private string _CallbackTime;
 		private string _CurrentServiceTime;
 
-		internal CallbackDetails(string callbackId, string callbackTime, string currentServiceTime)
+		internal RecurringTaskCallbackDetails(string callbackId, string callbackTime, string currentServiceTime)
 		{
 			_CallbackId = callbackId;
 			_CallbackTime = callbackTime;
 			_CurrentServiceTime = currentServiceTime;
 		}
 
+		/// <summary>
+		/// Gets the <see cref="T:System.Guid" /> identifying this callback.
+		/// </summary>
 		public Guid CallbackId
 		{
 			get
@@ -51,6 +57,9 @@ namespace Revalee.Client.RecurringTasks
 			}
 		}
 
+		/// <summary>
+		/// Gets the scheduled <see cref="T:System.DateTimeOffset" /> of this callback.
+		/// </summary>
 		public DateTimeOffset CallbackTime
 		{
 			get
@@ -59,6 +68,9 @@ namespace Revalee.Client.RecurringTasks
 			}
 		}
 
+		/// <summary>
+		/// Gets the <see cref="T:System.DateTimeOffset" /> of the moment this callback was issued according to the Revalee service that issued the callback.
+		/// </summary>
 		public DateTimeOffset CurrentServiceTime
 		{
 			get

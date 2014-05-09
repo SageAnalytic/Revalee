@@ -31,24 +31,60 @@ using System.Collections.Generic;
 
 namespace Revalee.Client.RecurringTasks
 {
+	/// <summary>
+	/// Represents a manifest with information on recurring tasks.
+	/// </summary>
 	public interface ITaskManifest
 	{
+		/// <summary>
+		/// Gets a <see cref="T:System.Boolean" /> value indicating the activation state of the recurring task module.
+		/// </summary>
 		bool IsActive { get; }
 
+		/// <summary>
+		/// Gets a <see cref="T:System.Boolean" /> value indicating that there are no recurring tasks defined.
+		/// </summary>
 		bool IsEmpty { get; }
 
+		/// <summary>
+		/// Gets or sets the <see cref="T:System.Uri" /> defining the base URL for callbacks.
+		/// </summary>
 		Uri CallbackBaseUri { get; set; }
 
+		/// <summary>
+		/// Gets the enumeration of defined <see cref="T:Revalee.Client.RecurringTasks.IRecurringTask" /> objects.
+		/// </summary>
 		IEnumerable<IRecurringTask> Tasks { get; }
 
+		/// <summary>
+		/// Creates a callback task with a daily recurrence.
+		/// </summary>
+		/// <param name="hour">A <see cref="T:System.Int32" /> value for the scheduled hour (0-23).</param>
+		/// <param name="minute">A <see cref="T:System.Int32" /> value for the scheduled minute (0-59).</param>
+		/// <param name="url">A <see cref="T:System.Uri" /> value defining the target of the callback.</param>
 		void AddDailyTask(int hour, int minute, Uri url);
 
+		/// <summary>
+		/// Creates a callback task with a daily recurrence.
+		/// </summary>
+		/// <param name="minute">A <see cref="T:System.Int32" /> value for the scheduled minute (0-59).</param>
+		/// <param name="url">A <see cref="T:System.Uri" /> value defining the target of the callback.</param>
 		void AddHourlyTask(int minute, Uri url);
 
+		/// <summary>
+		/// Removes a recurring callback task.
+		/// </summary>
+		/// <param name="identifier">The <see cref="Revalee.Client.RecurringTasks.IRecurringTask.Identifier" /> of the task to be removed.</param>
 		void RemoveTask(string identifier);
 
+		/// <summary>
+		/// An event handler triggered when the recurring task module is activated.
+		/// </summary>
 		event EventHandler Activated;
 
+		/// <summary>
+		/// An event handler triggered when the recurring task module is deactivated.
+		/// </summary>
 		event EventHandler<DeactivationEventArgs> Deactivated;
 	}
 }

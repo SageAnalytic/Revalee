@@ -30,13 +30,23 @@ using System;
 
 namespace Revalee.Client.RecurringTasks
 {
+	/// <summary>
+	/// Represents event arguments for a deactivation of the recurring task module.
+	/// </summary>
 	public sealed class DeactivationEventArgs : EventArgs
 	{
+		/// <summary>
+		/// Creates an instance of the <see cref="T:Revalee.Client.RecurringTasks.DeactivationEventArgs"/> class.
+		/// </summary>
+		/// <param name="exception">A <see cref="T:Revalee.Client.RecurringTasks.RevaleeRequestException"/> that is the cause of the deactivation.</param>
 		public DeactivationEventArgs(RevaleeRequestException exception)
 		{
 			this.Exception = exception;
 		}
 
+		/// <summary>
+		/// Gets the <see cref="T:Revalee.Client.RecurringTasks.RevaleeRequestException"/> that caused the deactivation.
+		/// </summary>
 		public RevaleeRequestException Exception
 		{
 			get;

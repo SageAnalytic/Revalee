@@ -33,6 +33,9 @@ using System.Web;
 
 namespace Revalee.Client.RecurringTasks
 {
+	/// <summary>
+	/// HttpModule that schedules and intercepts recurring tasks.
+	/// </summary>
 	public class RecurringTaskModule : IHttpModule
 	{
 		private const string _ManifestApplicationKey = "RevaleeLifecycleSessionIdentifier";
@@ -40,6 +43,10 @@ namespace Revalee.Client.RecurringTasks
 
 		private static TaskManifest _Manifest = LoadManifest();
 
+		/// <summary>
+		/// Initializes the recurring tasks module.
+		/// </summary>
+		/// <param name="context">The currently executing <see cref="T:System.Web.HttpApplication" /> instance.</param>
 		public void Init(HttpApplication context)
 		{
 			if (context != null)
@@ -51,6 +58,9 @@ namespace Revalee.Client.RecurringTasks
 			}
 		}
 
+		/// <summary>
+		/// Reactivates the <see cref="T:Revalee.Client.RecurringTasks.RecurringTaskModule" /> following an unintended deactivation.
+		/// </summary>
 		public void Restart()
 		{
 			if (_Manifest != null)
@@ -65,19 +75,29 @@ namespace Revalee.Client.RecurringTasks
 			}
 		}
 
+		/// <summary>
+		/// Retrieves the current <see cref="T:Revalee.Client.RecurringTasks.ITaskManifest" /> instance that manages recurring tasks.
+		/// </summary>
+		/// <returns>An <see cref="T:Revalee.Client.RecurringTasks.ITaskManifest" /> instance for the current <see cref="T:System.Web.HttpApplication" />.</returns>
 		public static ITaskManifest GetManifest()
 		{
 			return _Manifest;
 		}
 
-		public static CallbackDetails RecurringCallbackDetails
+		/// <summary>
+		/// Gets a <see cref="T:Revalee.Client.RecurringTasks.RecurringTaskCallbackDetails" /> instance if the the current request is the result of a recurring callback.
+		/// </summary>
+		public static RecurringTaskCallbackDetails CallbackDetails
 		{
 			get
 			{
-				return (CallbackDetails)HttpContext.Current.Items[_InProcessContextKey];
+				return (RecurringTaskCallbackDetails)HttpContext.Current.Items[_InProcessContextKey];
 			}
 		}
 
+		/// <summary>
+		/// Gets a <see cref="T:System.Boolean" /> value indicating that the current request is the result of a recurring callback.
+		/// </summary>
 		public static bool IsProcessingRecurringCallback
 		{
 			get
@@ -86,6 +106,9 @@ namespace Revalee.Client.RecurringTasks
 			}
 		}
 
+		/// <summary>
+		/// Disposes the module.
+		/// </summary>
 		public void Dispose()
 		{
 			GC.SuppressFinalize(this);
@@ -150,9 +173,9 @@ namespace Revalee.Client.RecurringTasks
 			return manifest;
 		}
 
-		private static CallbackDetails BuildCallbackDetails(HttpRequest request)
+		private static RecurringTaskCallbackDetails BuildCallbackDetails(HttpRequest request)
 		{
-			return new CallbackDetails(request.Form["CallbackId"], request.Form["CallbackTime"], request.Form["CurrentServiceTime"]);
+			return new RecurringTaskCallbackDetails(request.Form["CallbackId"], request.Form["CallbackTime"], request.Form["CurrentServiceTime"]);
 		}
 	}
 }

@@ -28,9 +28,19 @@ SOFTWARE.
 
 namespace Revalee.Client.RecurringTasks
 {
+	/// <summary>
+	/// Represents the periodicity of a recurring task.
+	/// </summary>
 	public enum PeriodicityType
 	{
+		/// <summary>
+		/// An hourly recurrence schedule.
+		/// </summary>
 		Hourly,
+
+		/// <summary>
+		/// A daily recurrence schedule.
+		/// </summary>
 		Daily
 	}
 }

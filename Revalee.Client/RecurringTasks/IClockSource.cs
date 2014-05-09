@@ -30,8 +30,14 @@ using System;
 
 namespace Revalee.Client.RecurringTasks
 {
+	/// <summary>
+	/// Represents a time source used to schedule recurring tasks.
+	/// </summary>
 	public interface IClockSource
 	{
+		/// <summary>
+		/// Gets the current <see cref="T:System.DateTimeOffset" /> to be used for scheduling callbacks.
+		/// </summary>
 		DateTimeOffset Now { get; }
 	}
 }

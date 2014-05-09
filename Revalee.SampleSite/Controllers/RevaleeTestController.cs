@@ -1,7 +1,9 @@
 ﻿using Revalee.Client;
 using Revalee.Client.Mvc;
+using Revalee.Client.RecurringTasks;
 using Revalee.SampleSite.Infrastructure;
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -80,11 +82,11 @@ namespace Revalee.SampleSite.Controllers
 		[HttpPost]
 		public ActionResult Recurring()
 		{
-			if (Revalee.Client.RecurringTasks.RecurringTaskModule.IsProcessingRecurringCallback)
+			if (RecurringTaskModule.IsProcessingRecurringCallback)
 			{
-				Revalee.Client.RecurringTasks.CallbackDetails details = Revalee.Client.RecurringTasks.RecurringTaskModule.RecurringCallbackDetails;
+				RecurringTaskCallbackDetails details = RecurringTaskModule.CallbackDetails;
 
-				System.Diagnostics.Debug.WriteLine("Recurring event triggered at {0:F}, requested at {1:F} by {2}.", DateTime.Now, details.CallbackTime.LocalDateTime, details.CallbackId);
+				Debug.WriteLine("Recurring event triggered at {0:F}, requested at {1:F} by {2}.", DateTime.Now, details.CallbackTime.LocalDateTime, details.CallbackId);
 			}
 
 			return new HttpStatusCodeResult(HttpStatusCode.OK);
@@ -94,7 +96,7 @@ namespace Revalee.SampleSite.Controllers
 		{
 			if (filterContext != null && filterContext.Exception != null)
 			{
-				System.Diagnostics.Debug.WriteLine("Error: " + filterContext.Exception.Message);
+				Debug.WriteLine("Error: " + filterContext.Exception.Message);
 			}
 
 			filterContext.ExceptionHandled = true;

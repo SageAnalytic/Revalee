@@ -56,6 +56,11 @@ namespace Revalee.Client
 		{
 		}
 
+		/// <summary>
+		/// Initializes a new instance of <see cref="T:Revalee.Client.ServiceBaseUri" /> class from the specified instances of <see cref="T:System.Runtime.Serialization.SerializationInfo" /> and <see cref="T:System.Runtime.Serialization.StreamingContext" /> classes.
+		/// </summary>
+		/// <param name="info">An instance of the <see cref="T:System.Runtime.Serialization.SerializationInfo" /> class containing the information required to serialize the new <see cref="T:Revalee.Client.ServiceBaseUri" /> instance.</param>
+		/// <param name="context">An instance of the <see cref="T:System.Runtime.Serialization.StreamingContext" /> class containing the source of the serialized stream associated with the new <see cref="T:Revalee.Client.ServiceBaseUri" /> instance.</param>
 		protected ServiceBaseUri(SerializationInfo info, StreamingContext context)
 			: base(info, context)
 		{

@@ -48,7 +48,7 @@
     <Compile Include="Configuration\ClientSettingsConfigurationElement.cs" />
     <Compile Include="Configuration\RevaleeSection.cs" />
     <Compile Include="RecurringTasks\ActivationState.cs" />
-    <Compile Include="RecurringTasks\CallbackDetails.cs" />
+    <Compile Include="RecurringTasks\RecurringTaskCallbackDetails.cs" />
     <Compile Include="RecurringTasks\CallbackRequest.cs" />
     <Compile Include="RecurringTasks\ConfiguredTask.cs" />
     <Compile Include="RecurringTasks\DeactivationEventArgs.cs" />
