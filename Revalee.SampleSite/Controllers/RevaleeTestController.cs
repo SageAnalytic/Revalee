@@ -72,9 +72,10 @@ namespace Revalee.SampleSite.Controllers
 		{
 			DateTimeOffset now = DateTimeOffset.Now;
 
-			Interlocked.Increment(ref _TotalCallbackCount);
-
-			Task.Run(() => _Log.Update(callbackId, currentServiceTime, this.Request.Url, id, now));
+			if (_Log.Update(callbackId, currentServiceTime, this.Request.Url, id, now))
+			{
+				Interlocked.Increment(ref _TotalCallbackCount);
+			}
 
 			return new HttpStatusCodeResult(HttpStatusCode.OK);
 		}

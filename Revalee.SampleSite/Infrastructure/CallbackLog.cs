@@ -7,39 +7,42 @@ namespace Revalee.SampleSite.Infrastructure
 {
 	public class CallbackLog
 	{
-		private List<CallbackDetails> _Log = new List<CallbackDetails>();
+		private Dictionary<Guid, CallbackDetails> _Log = new Dictionary<Guid, CallbackDetails>();
 
 		internal void Add(Guid callbackId, DateTimeOffset callbackTime, Uri callbackUri, DateTimeOffset clientRequestedTime)
 		{
-			lock (((ICollection)_Log).SyncRoot)
+			var details = new CallbackDetails() { CallbackId = callbackId, ScheduledCallbackTime = callbackTime, CallbackUri = callbackUri, ClientRequestedTime = clientRequestedTime };
+
+			lock (_Log)
 			{
-				_Log.Add(new CallbackDetails() { CallbackId = callbackId, ScheduledCallbackTime = callbackTime, CallbackUri = callbackUri, ClientRequestedTime = clientRequestedTime });
+				_Log.Add(callbackId, details);
 			}
 		}
 
-		internal void Update(Guid callbackId, DateTimeOffset currentServiceTime, Uri calledbackUri, string parameterValue, DateTimeOffset clientReceivedTime)
+		internal bool Update(Guid callbackId, DateTimeOffset currentServiceTime, Uri calledbackUri, string parameterValue, DateTimeOffset clientReceivedTime)
 		{
-			lock (((ICollection)_Log).SyncRoot)
+			lock (_Log)
 			{
-				for (int index = _Log.Count - 1; index >= 0; index--)
+				CallbackDetails details;
+
+				if (_Log.TryGetValue(callbackId, out details))
 				{
-					CallbackDetails details = _Log[index];
-					if (details.CallbackId.Equals(callbackId))
-					{
-						Debug.Assert(details.CallbackUri.OriginalString.Equals(calledbackUri.OriginalString));
-						details.ServiceProcessedTime = currentServiceTime;
-						details.ClientReceivedTime = clientReceivedTime;
-						details.ParameterValue = parameterValue;
-					}
+					Debug.Assert(details.CallbackUri.OriginalString.Equals(calledbackUri.OriginalString));
+					details.ServiceProcessedTime = currentServiceTime;
+					details.ClientReceivedTime = clientReceivedTime;
+					details.ParameterValue = parameterValue;
+					return true;
 				}
+
+				return false;
 			}
 		}
 
 		internal List<CallbackDetails> Snapshot()
 		{
-			lock (((ICollection)_Log).SyncRoot)
+			lock (_Log)
 			{
-				return new List<CallbackDetails>(_Log);
+				return new List<CallbackDetails>(_Log.Values);
 			}
 		}
 	}
