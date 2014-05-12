@@ -62,16 +62,16 @@ namespace Revalee.Service
 
 		private void EnsureContinuation()
 		{
-			DateTimeOffset? nextTaskTime = Supervisor.State.NextTaskTime;
+			DateTime? nextTaskTime = Supervisor.State.NextTaskTime;
 			if (nextTaskTime.HasValue)
 			{
 				SetNextDueTime(nextTaskTime.Value);
 			}
 		}
 
-		private void SetNextDueTime(DateTimeOffset nextTaskTime)
+		private void SetNextDueTime(DateTime nextTaskTime)
 		{
-			double millisecondsOfDelay = nextTaskTime.Subtract(DateTimeOffset.Now).TotalMilliseconds;
+			double millisecondsOfDelay = nextTaskTime.Subtract(DateTime.UtcNow).TotalMilliseconds;
 
 			int nextTimerInterval;
 

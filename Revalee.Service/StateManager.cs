@@ -136,11 +136,11 @@ namespace Revalee.Service
 			}
 		}
 
-		public DateTimeOffset? NextTaskTime
+		public DateTime? NextTaskTime
 		{
 			get
 			{
-				DateTimeOffset nextDue;
+				DateTime nextDue;
 
 				if (_AwaitingTasks.TryPeekNextDue(out nextDue))
 				{

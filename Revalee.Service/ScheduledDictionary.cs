@@ -97,7 +97,7 @@ namespace Revalee.Service
 			}
 		}
 
-		public bool TryAdd(TKey key, TValue value, DateTimeOffset due)
+		public bool TryAdd(TKey key, TValue value, DateTime due)
 		{
 			if (key == null)
 			{
@@ -121,12 +121,7 @@ namespace Revalee.Service
 			return true;
 		}
 
-		public bool TryAdd(TKey key, TValue value, DateTime due)
-		{
-			return TryAdd(key, value, new DateTimeOffset(due));
-		}
-
-		public void AddOrReplace(TKey key, TValue value, DateTimeOffset due)
+		public void AddOrReplace(TKey key, TValue value, DateTime due)
 		{
 			if (key == null)
 			{
@@ -150,11 +145,6 @@ namespace Revalee.Service
 				heapIndex = InsertIntoHeap(key, value, due);
 				TrackModification();
 			}
-		}
-
-		public void AddOrReplace(TKey key, TValue value, DateTime due)
-		{
-			AddOrReplace(key, value, new DateTimeOffset(due));
 		}
 
 		public TValue this[TKey key]
@@ -331,7 +321,7 @@ namespace Revalee.Service
 			}
 		}
 
-		public bool TryPeekNextDue(out DateTimeOffset result)
+		public bool TryPeekNextDue(out DateTime result)
 		{
 			lock (_InternalLock)	// Read with possible write operation
 			{
@@ -342,7 +332,7 @@ namespace Revalee.Service
 
 				if (HashtableCount == 0)
 				{
-					result = default(DateTimeOffset);
+					result = default(DateTime);
 					return false;
 				}
 
@@ -582,7 +572,7 @@ namespace Revalee.Service
 			_PendingDeleteCount = 0;
 		}
 
-		private int InsertIntoHeap(TKey key, TValue value, DateTimeOffset due)
+		private int InsertIntoHeap(TKey key, TValue value, DateTime due)
 		{
 			int nextAvailableHeapIndex = HeapCount;
 			EnsureHeapCapacity();
@@ -919,19 +909,19 @@ namespace Revalee.Service
 
 		private sealed class HeapEntry : IComparable, IComparable<HeapEntry>
 		{
-			public DateTimeOffset Due;
+			public DateTime Due;
 			public TKey Key;
 			public TValue Value;
 			public bool IsDeleted;
 			private long _Ticks;
 			private long _Tiebreak;
 
-			public HeapEntry(DateTimeOffset due, long tiebreak, TKey key, TValue value)
+			public HeapEntry(DateTime due, long tiebreak, TKey key, TValue value)
 			{
 				this.Due = due;
 				this.Key = key;
 				this.Value = value;
-				this._Ticks = due.UtcTicks;
+				this._Ticks = due.Ticks;
 				this._Tiebreak = tiebreak;
 			}
 
