@@ -568,7 +568,7 @@ namespace Revalee.Service
 
 		private void InitializeHeap(int capacity)
 		{
-			_HeapEntries = new HeapEntry[_InitialCapacity];
+			_HeapEntries = new HeapEntry[capacity];
 			_PendingDeleteCount = 0;
 		}
 
@@ -641,7 +641,6 @@ namespace Revalee.Service
 				}
 
 				int lastHeapIndex = HeapCount - 1;
-				HeapEntry nextAppointment = _HeapEntries[0];
 				HeapEntry followingAppointment = _HeapEntries[lastHeapIndex];
 
 				if (lastHeapIndex > 0)
@@ -945,21 +944,13 @@ namespace Revalee.Service
 
 			public static int Compare(HeapEntry x, HeapEntry y)
 			{
-				try
-				{
-					if (x._Ticks < y._Ticks) return -1;
-					if (x._Ticks > y._Ticks) return 1;
+				if (x._Ticks < y._Ticks) return -1;
+				if (x._Ticks > y._Ticks) return 1;
 
-					// Earlier added entries should be come before later entries due at the same time
-					if (x._Tiebreak < y._Tiebreak) return -1;
+				// Earlier added entries should be come before later entries due at the same time
+				if (x._Tiebreak < y._Tiebreak) return -1;
 
-					return 1;
-				}
-				catch (Exception ex)
-				{
-					System.Diagnostics.Debug.WriteLine(ex.Message);
-					return 0;
-				}
+				return 1;
 			}
 		}
 
@@ -1302,9 +1293,16 @@ namespace Revalee.Service
 					return false;
 				}
 
-				if ((x is string) && (y is string))
+				string xstr = x as string;
+
+				if (xstr != null)
 				{
-					return Equals((string)x, (string)y);
+					string ystr = y as string;
+
+					if (ystr != null)
+					{
+						return string.Equals(xstr, ystr);
+					}
 				}
 
 				return object.Equals(x, y);
