@@ -1,15 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-
 using System.Threading;
 
 namespace Revalee.Service
 {
 	internal static class AbortableThreadPool
 	{
-		private static List<WorkItem> _WorkItems = new List<WorkItem>();
+		private readonly static HashSet<WorkItem> _WorkItems = new HashSet<WorkItem>();
 
-		private class WorkItem
+		private sealed class WorkItem
 		{
 			public WaitCallback Callback;
 			public object State;
@@ -33,31 +32,29 @@ namespace Revalee.Service
 
 			bool success = false;
 
+			// Start tracking this work item
 			lock (_WorkItems)
 			{
 				_WorkItems.Add(workItem);
+			}
 
-				try
+			try
+			{
+				// Place work item on the thread pool queue
+				success = ThreadPool.QueueUserWorkItem(new WaitCallback(HandleCallback), workItem);
+			}
+			catch
+			{
+				// Work item could not be queued
+				success = false;
+				throw;
+			}
+			finally
+			{
+				if (!success)
 				{
-					success = ThreadPool.QueueUserWorkItem(new WaitCallback(HandleCallback), workItem);
-				}
-				catch
-				{
-					success = false;
-					throw;
-				}
-				finally
-				{
-					if (!success)
-					{
-						try
-						{
-							_WorkItems.Remove(workItem);
-						}
-						catch
-						{
-						}
-					}
+					// Stop tracking this work item
+					RemoveWorkItem(workItem);
 				}
 			}
 
@@ -70,6 +67,7 @@ namespace Revalee.Service
 			{
 				foreach (WorkItem workItem in _WorkItems)
 				{
+					// Check if the work item is currently executing
 					if (workItem.Thread != null)
 					{
 						if (workItem.State == null)
@@ -80,9 +78,16 @@ namespace Revalee.Service
 						{
 							workItem.Thread.Abort(workItem.State);
 						}
+
+						// Remove the ability to abort the work item thread
+						workItem.Thread = null;
 					}
+
+					// Remove the ability to execute the work item delegate
+					workItem.Callback = null;
 				}
 
+				// Clear all active work items
 				_WorkItems.Clear();
 			}
 		}
@@ -91,25 +96,42 @@ namespace Revalee.Service
 		{
 			WorkItem workItem = (WorkItem)state;
 
+			lock (_WorkItems)
+			{
+				// Check if work item has been cancelled
+				if (workItem.Callback == null)
+				{
+					return;
+				}
+
+				// Track the thread assigned to this work item
+				workItem.Thread = Thread.CurrentThread;
+			}
+
 			try
 			{
-				workItem.Thread = Thread.CurrentThread;
+				// Begin execution of the work item
 				ExecutionContext.Run(workItem.Context, new ContextCallback(workItem.Callback.Invoke), workItem.State);
 			}
 			finally
 			{
+				// Stop tracking this work item
+				RemoveWorkItem(workItem);
+			}
+		}
+
+		private static void RemoveWorkItem(WorkItem workItem)
+		{
+			lock (_WorkItems)
+			{
+				// Remove the ability to execute the work item delegate
+				workItem.Callback = null;
+
+				// Remove the ability to abort the work item thread
 				workItem.Thread = null;
 
-				lock (_WorkItems)
-				{
-					try
-					{
-						_WorkItems.Remove(workItem);
-					}
-					catch
-					{
-					}
-				}
+				// Remove the work item from the list of active work items
+				_WorkItems.Remove(workItem);
 			}
 		}
 	}
