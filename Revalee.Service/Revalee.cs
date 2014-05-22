@@ -92,7 +92,6 @@ namespace Revalee.Service
 			this.Stop();
 		}
 
-
 		[MTAThread]
 		public static void Main()
 		{

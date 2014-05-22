@@ -13,22 +13,25 @@ namespace Revalee.Service
 		public static void DumpToConsole()
 		{
 			var taskList = new SortedList<RevaleeTask, RevaleeTask>();
-			ITaskPersistenceProvider persistenceProvider;
+			TaskPersistenceSettings persistenceSettings;
 
 			using (var config = new ConfigurationManager())
 			{
-				// Load persisted tasks from the persistence provider
-				persistenceProvider = (ITaskPersistenceProvider)Activator.CreateInstance(config.TaskPersistenceProvider);
+				persistenceSettings = config.TaskPersistenceSettings;
 			}
 
-			if (persistenceProvider == null)
+			// Load persisted tasks from the persistence provider
+			ITaskPersistenceProvider persistenceProvider = persistenceSettings.CreateProvider();
+
+			if (persistenceProvider is NullTaskPersistenceProvider)
 			{
-				Console.WriteLine("ERROR: Cannot load the configured persistence provider.");
+				Console.WriteLine("WARNING: Exporting tasks is not available, because there is no configured task persistence provider.");
+				return;
 			}
 
 			try
 			{
-				persistenceProvider.Open(Supervisor.Configuration.TaskPersistenceConnectionString);
+				persistenceProvider.Open(persistenceSettings.ConnectionString);
 
 				foreach (RevaleeTask task in persistenceProvider.ListAllTasks())
 				{

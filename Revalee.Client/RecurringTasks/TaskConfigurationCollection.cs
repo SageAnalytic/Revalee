@@ -26,9 +26,9 @@ SOFTWARE.
 
 #endregion License
 
+using Revalee.Client.Configuration;
 using System;
 using System.Configuration;
-using Revalee.Client.Configuration;
 
 namespace Revalee.Client.RecurringTasks
 {

@@ -31,7 +31,7 @@ namespace Revalee.Service
 			if (_Listener == null)
 			{
 				// Do not commence listening if there are no configured URL prefixes
-				if (Supervisor.Configuration.ListenerPrefixes.Length == 0)
+				if (Supervisor.Configuration.ListenerPrefixes.Count == 0)
 				{
 					return;
 				}

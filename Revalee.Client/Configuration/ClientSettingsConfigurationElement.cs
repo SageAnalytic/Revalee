@@ -27,7 +27,6 @@ SOFTWARE.
 #endregion License
 
 using System;
-using System.ComponentModel;
 using System.Configuration;
 
 namespace Revalee.Client.Configuration

@@ -104,6 +104,11 @@ namespace Revalee.Service
 				throw new ArgumentNullException("key");
 			}
 
+			if (due.Kind != DateTimeKind.Utc)
+			{
+				throw new ArgumentException("DateTime argument not provided in UTC.", "due");
+			}
+
 			lock (_InternalLock)	// Write operation
 			{
 				int heapIndex = FindHeapIndexInHashtable(key);
@@ -128,6 +133,11 @@ namespace Revalee.Service
 				throw new ArgumentNullException("key");
 			}
 
+			if (due.Kind != DateTimeKind.Utc)
+			{
+				throw new ArgumentException("DateTime argument not provided in UTC.", "due");
+			}
+
 			lock (_InternalLock)	// Write operation
 			{
 				int heapIndex = FindHeapIndexInHashtable(key);
@@ -145,6 +155,58 @@ namespace Revalee.Service
 				heapIndex = InsertIntoHeap(key, value, due);
 				TrackModification();
 			}
+		}
+
+		public TValue AddOrReplace(TKey key, Func<TValue> addValueFactory, Func<TValue, DateTime, TValue> replaceValueFactory, Func<TValue, DateTime?, DateTime> dueFactory)
+		{
+			if (key == null)
+			{
+				throw new ArgumentNullException("key");
+			}
+
+			TValue value;
+
+			lock (_InternalLock)	// Write operation
+			{
+				int heapIndex = FindHeapIndexInHashtable(key);
+
+				_Version++;
+
+				if (heapIndex >= 0)
+				{
+					HeapEntry cancelledAppointment = _HeapEntries[heapIndex];
+					cancelledAppointment.IsDeleted = true;
+					DeleteFromHashtable(key);
+					_PendingDeleteCount++;
+					value = replaceValueFactory(cancelledAppointment.Value, cancelledAppointment.Due);
+					DateTime due = dueFactory(value, cancelledAppointment.Due);
+
+					if (due.Kind != DateTimeKind.Utc)
+					{
+						throw new ArgumentException("DateTime argument not provided in UTC.", "due");
+
+					}
+
+					heapIndex = InsertIntoHeap(key, value, due);
+				}
+				else
+				{
+					value = addValueFactory();
+					DateTime due = dueFactory(value, null);
+
+					if (due.Kind != DateTimeKind.Utc)
+					{
+						throw new ArgumentException("DateTime argument not provided in UTC.", "due");
+
+					}
+
+					heapIndex = InsertIntoHeap(key, value, dueFactory(value, null));
+				}
+
+				TrackModification();
+			}
+
+			return value;
 		}
 
 		public TValue this[TKey key]
@@ -434,7 +496,7 @@ namespace Revalee.Service
 		{
 			get
 			{
-				// Optimistic concurrency for this idempotent and inexpensive operation 
+				// Optimistic concurrency for this idempotent and inexpensive operation
 				if (_KeyEnumerable == null)
 				{
 					_KeyEnumerable = new ScheduledDictionary<TKey, TValue>.KeyEnumerable(this);
@@ -448,7 +510,7 @@ namespace Revalee.Service
 		{
 			get
 			{
-				// Optimistic concurrency for this idempotent and inexpensive operation 
+				// Optimistic concurrency for this idempotent and inexpensive operation
 				if (_ValueEnumerable == null)
 				{
 					_ValueEnumerable = new ScheduledDictionary<TKey, TValue>.ValueEnumerable(this);
@@ -462,7 +524,7 @@ namespace Revalee.Service
 		{
 			get
 			{
-				// Optimistic concurrency for this idempotent and inexpensive operation 
+				// Optimistic concurrency for this idempotent and inexpensive operation
 				if (_OverdueValueEnumerable == null)
 				{
 					_OverdueValueEnumerable = new ScheduledDictionary<TKey, TValue>.OverdueValueEnumerable(this);
@@ -681,6 +743,7 @@ namespace Revalee.Service
 
 			while (HeapCount > 0)
 			{
+				// The next appointment is deleted
 				if (_HeapEntries[0].IsDeleted)
 				{
 					if (!deletedEntriesRemoved)
@@ -689,6 +752,7 @@ namespace Revalee.Service
 						deletedEntriesRemoved = true;
 					}
 				}
+				// The next appointment is overdue
 				else if (_HeapEntries[0].IsOverdue)
 				{
 					if (overdueEntriesRemoved == 0)
@@ -698,6 +762,7 @@ namespace Revalee.Service
 
 					overdueEntriesRemoved++;
 				}
+				// The next appointment is neither deleted nor overdue and pruning can terminate
 				else
 				{
 					break;
@@ -709,11 +774,13 @@ namespace Revalee.Service
 
 				if (lastHeapIndex > 0)
 				{
+					// The next appointment is overdue (since it's not deleted), will be removed from the heap, and needs to be removed from the hashtable
 					if (!nextAppointment.IsDeleted)
 					{
 						DeleteFromHashtable(nextAppointment.Key);
 					}
 
+					// The subsequent appointment is not deleted and needs to be removed & re-added to hashtable with a new heap index value
 					if (!followingAppointment.IsDeleted)
 					{
 						DeleteFromHashtable(followingAppointment.Key);
@@ -726,7 +793,8 @@ namespace Revalee.Service
 					{
 						_PendingDeleteCount--;
 					}
-					else
+
+					if (!followingAppointment.IsDeleted)
 					{
 						InsertIntoHashtable(followingAppointment.Key, 0);
 					}

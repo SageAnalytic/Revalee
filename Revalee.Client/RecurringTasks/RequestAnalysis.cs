@@ -26,8 +26,6 @@ SOFTWARE.
 
 #endregion License
 
-using System;
-
 namespace Revalee.Client.RecurringTasks
 {
 	internal class RequestAnalysis

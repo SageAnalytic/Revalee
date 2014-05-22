@@ -4,12 +4,15 @@ using System.Reflection;
 using System.Security;
 using System.Security.Principal;
 using System.ServiceProcess;
+using System.Threading;
 
 namespace Revalee.Service
 {
 	internal sealed class InteractiveExecution
 	{
 		private const string _RequiredServiceName = "Revalee.Service";
+
+		private static string _ConsoleStatusMessage = string.Empty;
 
 		private InteractiveExecution()
 		{
@@ -26,7 +29,7 @@ namespace Revalee.Service
 				return;
 			}
 
-			Console.WriteLine("Loading stored tasks...");
+			WriteStatusMessage("Initializing...");
 
 			try
 			{
@@ -34,6 +37,7 @@ namespace Revalee.Service
 			}
 			catch (Exception ex)
 			{
+				Console.WriteLine();
 				Console.WriteLine("Revalee service cannot start due to the following critical error:");
 				Console.WriteLine("*  {0}", ex.Message);
 				Console.WriteLine();
@@ -44,11 +48,13 @@ namespace Revalee.Service
 
 			try
 			{
-				if (Supervisor.Configuration.ListenerPrefixes.Length == 0)
+				ClearStatusMessage();
+
+				if (Supervisor.Configuration.ListenerPrefixes.Count == 0)
 				{
 					Console.WriteLine("Revalee service is running but is not listening for callback requests.");
 				}
-				else if (Supervisor.Configuration.ListenerPrefixes.Length == 1)
+				else if (Supervisor.Configuration.ListenerPrefixes.Count == 1)
 				{
 					Console.WriteLine("Revalee service is running and listening on {0}.", Supervisor.Configuration.ListenerPrefixes[0]);
 				}
@@ -65,16 +71,26 @@ namespace Revalee.Service
 				Console.WriteLine("Press any key to terminate.");
 				Console.ReadKey(true);
 				Console.WriteLine();
-				Console.WriteLine("Service stopping...");
-				Console.WriteLine();
 			}
 			finally
 			{
+				WriteStatusMessage("Service stopping...");
+
 				try
 				{
 					Supervisor.Stop();
 				}
-				catch { }
+				catch (ThreadAbortException)
+				{
+					// Ignore thread abort exceptions on shutdown
+				}
+				catch (ObjectDisposedException)
+				{
+					// Ignore object disposed exceptions on shutdown
+				}
+
+				ClearStatusMessage();
+				Console.WriteLine();
 			}
 		}
 
@@ -184,6 +200,28 @@ namespace Revalee.Service
 			catch (SecurityException)
 			{
 				return false;
+			}
+		}
+
+		private static void WriteStatusMessage(string text)
+		{
+			ClearStatusMessage();
+
+			if (!string.IsNullOrEmpty(text))
+			{
+				_ConsoleStatusMessage = text;
+				Console.Write(text);
+			}
+		}
+
+		private static void ClearStatusMessage()
+		{
+			if (!string.IsNullOrEmpty(_ConsoleStatusMessage))
+			{
+				Console.Write(new string('\b', _ConsoleStatusMessage.Length));
+				Console.Write(new string(' ', _ConsoleStatusMessage.Length));
+				Console.Write(new string('\b', _ConsoleStatusMessage.Length));
+				_ConsoleStatusMessage = string.Empty;
 			}
 		}
 	}

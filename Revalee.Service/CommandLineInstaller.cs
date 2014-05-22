@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Configuration.Install;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Reflection;
 using System.Security;
@@ -57,8 +58,8 @@ namespace Revalee.Service
 								// Windows XP
 								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
-									LaunchNetShellCommand("httpcfg.exe", string.Format("set urlacl /u {0} /a D:(A;;GX;;;{1})", prefix, GetAclAccountSid()));
-									LaunchNetShellCommand("httpcfg.exe", string.Format("set iplisten -i 0.0.0.0:{0}", prefix.Port));
+									LaunchNetShellCommand("httpcfg.exe", string.Format(CultureInfo.InvariantCulture, "set urlacl /u {0} /a D:(A;;GX;;;{1})", prefix, GetAclAccountSid()));
+									LaunchNetShellCommand("httpcfg.exe", string.Format(CultureInfo.InvariantCulture, "set iplisten -i 0.0.0.0:{0}", prefix.Port));
 								}
 								break;
 
@@ -66,8 +67,8 @@ namespace Revalee.Service
 								// Windows Server 2003
 								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
-									LaunchNetShellCommand("httpcfg.exe", string.Format("set urlacl /u {0} /a D:(A;;GX;;;{1})", prefix, GetAclAccountSid()));
-									LaunchNetShellCommand("httpcfg.exe", string.Format("set iplisten -i 0.0.0.0:{0}", prefix.Port));
+									LaunchNetShellCommand("httpcfg.exe", string.Format(CultureInfo.InvariantCulture, "set urlacl /u {0} /a D:(A;;GX;;;{1})", prefix, GetAclAccountSid()));
+									LaunchNetShellCommand("httpcfg.exe", string.Format(CultureInfo.InvariantCulture, "set iplisten -i 0.0.0.0:{0}", prefix.Port));
 								}
 								break;
 						}
@@ -80,8 +81,8 @@ namespace Revalee.Service
 								// Windows Vista, Windows Server 2008
 								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
-									LaunchNetShellCommand("netsh", string.Format("http add urlacl url={0} user=\"{1}\"", prefix, GetAclAccountName()));
-									LaunchNetShellCommand("netsh", string.Format("http add iplisten ipaddress=0.0.0.0:{0}", prefix));
+									LaunchNetShellCommand("netsh", string.Format(CultureInfo.InvariantCulture, "http add urlacl url={0} user=\"{1}\"", prefix, GetAclAccountName()));
+									LaunchNetShellCommand("netsh", string.Format(CultureInfo.InvariantCulture, "http add iplisten ipaddress=0.0.0.0:{0}", prefix));
 								}
 								break;
 
@@ -89,7 +90,7 @@ namespace Revalee.Service
 								// Windows 7, Windows Server 2008 R2, Windows 8, Windows Server 2012
 								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
-									LaunchNetShellCommand("netsh", string.Format("http add urlacl url={0} user=\"{1}\"", prefix, GetAclAccountName()));
+									LaunchNetShellCommand("netsh", string.Format(CultureInfo.InvariantCulture, "http add urlacl url={0} user=\"{1}\"", prefix, GetAclAccountName()));
 								}
 								break;
 						}
@@ -99,7 +100,7 @@ namespace Revalee.Service
 						// default behavior for future versions
 						foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 						{
-							LaunchNetShellCommand("netsh", string.Format("http add urlacl url={0} user=\"{1}\"", prefix, GetAclAccountName()));
+							LaunchNetShellCommand("netsh", string.Format(CultureInfo.InvariantCulture, "http add urlacl url={0} user=\"{1}\"", prefix, GetAclAccountName()));
 						}
 						break;
 				}
@@ -119,8 +120,8 @@ namespace Revalee.Service
 								// Windows XP
 								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
-									LaunchNetShellCommand("httpcfg.exe", string.Format("delete urlacl /u {0}", prefix));
-									LaunchNetShellCommand("httpcfg.exe", string.Format("delete iplisten -i 0.0.0.0:{0}", prefix.Port));
+									LaunchNetShellCommand("httpcfg.exe", string.Format(CultureInfo.InvariantCulture, "delete urlacl /u {0}", prefix));
+									LaunchNetShellCommand("httpcfg.exe", string.Format(CultureInfo.InvariantCulture, "delete iplisten -i 0.0.0.0:{0}", prefix.Port));
 								}
 								break;
 
@@ -128,8 +129,8 @@ namespace Revalee.Service
 								// Windows Server 2003
 								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
-									LaunchNetShellCommand("httpcfg.exe", string.Format("delete urlacl /u {0}", prefix));
-									LaunchNetShellCommand("httpcfg.exe", string.Format("delete iplisten -i 0.0.0.0:{0}", prefix.Port));
+									LaunchNetShellCommand("httpcfg.exe", string.Format(CultureInfo.InvariantCulture, "delete urlacl /u {0}", prefix));
+									LaunchNetShellCommand("httpcfg.exe", string.Format(CultureInfo.InvariantCulture, "delete iplisten -i 0.0.0.0:{0}", prefix.Port));
 								}
 								break;
 						}
@@ -142,8 +143,8 @@ namespace Revalee.Service
 								// Windows Vista, Windows Server 2008
 								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
-									LaunchNetShellCommand("netsh", string.Format("http delete urlacl url={0}", prefix));
-									LaunchNetShellCommand("netsh", string.Format("http delete iplisten ipaddress=0.0.0.0:{0}", prefix.Port));
+									LaunchNetShellCommand("netsh", string.Format(CultureInfo.InvariantCulture, "http delete urlacl url={0}", prefix));
+									LaunchNetShellCommand("netsh", string.Format(CultureInfo.InvariantCulture, "http delete iplisten ipaddress=0.0.0.0:{0}", prefix.Port));
 								}
 								break;
 
@@ -151,7 +152,7 @@ namespace Revalee.Service
 								// Windows 7, Windows Server 2008 R2, Windows 8, Windows Server 2012
 								foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 								{
-									LaunchNetShellCommand("netsh", string.Format("http delete urlacl url={0}", prefix));
+									LaunchNetShellCommand("netsh", string.Format(CultureInfo.InvariantCulture, "http delete urlacl url={0}", prefix));
 								}
 								break;
 						}
@@ -161,7 +162,7 @@ namespace Revalee.Service
 						// default behavior for future versions
 						foreach (ListenerPrefix prefix in _Configuration.ListenerPrefixes)
 						{
-							LaunchNetShellCommand("netsh", string.Format("http delete urlacl url={0}", prefix));
+							LaunchNetShellCommand("netsh", string.Format(CultureInfo.InvariantCulture, "http delete urlacl url={0}", prefix));
 						}
 						break;
 				}
@@ -250,7 +251,7 @@ namespace Revalee.Service
 			}
 			catch (System.ServiceProcess.TimeoutException)
 			{
-				Console.Write(string.Format("Could not start the {0} service.", GetServiceName()));
+				Console.Write(string.Format(CultureInfo.InvariantCulture, "Could not start the {0} service.", GetServiceName()));
 			}
 			finally
 			{
@@ -275,7 +276,7 @@ namespace Revalee.Service
 			}
 			catch (System.ServiceProcess.TimeoutException)
 			{
-				Console.Write(string.Format("Could not stop the {0} service.", GetServiceName()));
+				Console.Write(string.Format(CultureInfo.InvariantCulture, "Could not stop the {0} service.", GetServiceName()));
 			}
 			finally
 			{

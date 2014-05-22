@@ -47,7 +47,9 @@ namespace Revalee.Client.RecurringTasks
 		private readonly string _RecurringTaskHandlerAbsolutePath = GetHandlerAbsolutePath();
 		private readonly ITaskCollection _TaskCollection;
 		private Uri _CallbackBaseUri;
+
 		public event EventHandler Activated;
+
 		public event EventHandler<DeactivationEventArgs> Deactivated;
 
 		internal TaskManifest()
@@ -399,7 +401,7 @@ namespace Revalee.Client.RecurringTasks
 				return RecurringTaskHandlerPath;
 			}
 
-			if (virtualRoot[virtualRoot.Length-1] == '/')
+			if (virtualRoot[virtualRoot.Length - 1] == '/')
 			{
 				return string.Concat(virtualRoot, RecurringTaskHandlerPath.Substring(1));
 			}

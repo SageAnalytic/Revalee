@@ -27,9 +27,7 @@ SOFTWARE.
 #endregion License
 
 using System;
-using System.Globalization;
 using System.Threading;
-using System.Web;
 
 namespace Revalee.Client.RecurringTasks
 {

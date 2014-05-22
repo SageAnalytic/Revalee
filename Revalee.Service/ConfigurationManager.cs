@@ -1,19 +1,40 @@
-﻿using Revalee.Service.EsePersistence;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Xml;
 
 namespace Revalee.Service
 {
 	internal class ConfigurationManager : IDisposable
 	{
 		private const string _DefaultListenerPrefix = "http://+:46200/";
+		private const string _DefaultRetryIntervals = "PT1S,PT1M,PT1H";
+		private const string _ListenerPrefixesAppSettingsKey = "ListenerPrefixes";
+		private const string _RetryIntervalsAppSettingsKey = "RetryIntervals";
+		private const string _TaskPersistenceConnectionStringsKey = "TaskPersistence";
 
+		private TaskPersistenceSettings _TaskPersistenceSettings;
 		private UrlMatchDictionary<RevaleeUrlAuthorization> _AuthorizedTargets;
-		private ListenerPrefix[] _ListenerPrefixes;
+		private IList<ListenerPrefix> _ListenerPrefixes;
+		private IList<TimeSpan> _RetryIntervals;
 
 		public ConfigurationManager()
 		{
+		}
+
+		public TaskPersistenceSettings TaskPersistenceSettings
+		{
+			get
+			{
+				if (_TaskPersistenceSettings == null)
+				{
+					TaskPersistenceSettings persistenceSettings = LoadTaskPersistenceSettings();
+					_TaskPersistenceSettings = persistenceSettings;
+					return persistenceSettings;
+				}
+
+				return _TaskPersistenceSettings;
+			}
 		}
 
 		public IPartialMatchDictionary<Uri, RevaleeUrlAuthorization> AuthorizedTargets
@@ -22,7 +43,7 @@ namespace Revalee.Service
 			{
 				if (_AuthorizedTargets == null)
 				{
-					UrlMatchDictionary<RevaleeUrlAuthorization> authorizedTargets = LoadUrlAuthorizations();
+					UrlMatchDictionary<RevaleeUrlAuthorization> authorizedTargets = LoadUrlAuthorizationSettings();
 					_AuthorizedTargets = authorizedTargets;
 					return authorizedTargets;
 				}
@@ -31,13 +52,13 @@ namespace Revalee.Service
 			}
 		}
 
-		public ListenerPrefix[] ListenerPrefixes
+		public IList<ListenerPrefix> ListenerPrefixes
 		{
 			get
 			{
 				if (_ListenerPrefixes == null)
 				{
-					ListenerPrefix[] listenerPrefixes = LoadListenerPrefixesSetting();
+					IList<ListenerPrefix> listenerPrefixes = LoadListenerPrefixSettings();
 					_ListenerPrefixes = listenerPrefixes;
 					return listenerPrefixes;
 				}
@@ -46,83 +67,134 @@ namespace Revalee.Service
 			}
 		}
 
-		public Type TaskPersistenceProvider
+		public IList<TimeSpan> RetryIntervals
 		{
 			get
 			{
-				ConnectionStringSettings connectionStringSettings = System.Configuration.ConfigurationManager.ConnectionStrings["TaskPersistence"];
-				if (connectionStringSettings != null)
+				if (_RetryIntervals == null)
 				{
-					if (connectionStringSettings.ProviderName.Equals("Microsoft.Isam.Esent", StringComparison.OrdinalIgnoreCase))
-					{
-						return typeof(EseTaskPersistenceProvider);
-					}
+					IList<TimeSpan> retryIntervals = LoadRetryIntervalSettings();
+					_RetryIntervals = retryIntervals;
+					return retryIntervals;
 				}
 
-				return typeof(NullTaskPersistenceProvider);
-			}
-		}
-
-		public string TaskPersistenceConnectionString
-		{
-			get
-			{
-				ConnectionStringSettings connectionStringSettings = System.Configuration.ConfigurationManager.ConnectionStrings["TaskPersistence"];
-				if (connectionStringSettings != null)
-				{
-					return connectionStringSettings.ConnectionString;
-				}
-
-				return string.Empty;
+				return _RetryIntervals;
 			}
 		}
 
 		public void Initialize()
 		{
-			_ListenerPrefixes = LoadListenerPrefixesSetting();
-			_AuthorizedTargets = LoadUrlAuthorizations();
+			_ListenerPrefixes = LoadListenerPrefixSettings();
+			_RetryIntervals = LoadRetryIntervalSettings();
+			_AuthorizedTargets = LoadUrlAuthorizationSettings();
+			_TaskPersistenceSettings = LoadTaskPersistenceSettings();
 		}
 
 		public void ReloadAuthorizedTargets()
 		{
-			_AuthorizedTargets = LoadUrlAuthorizations();
+			_AuthorizedTargets = LoadUrlAuthorizationSettings();
 		}
 
-		private ListenerPrefix[] LoadListenerPrefixesSetting()
+		private TaskPersistenceSettings LoadTaskPersistenceSettings()
 		{
-			string setting = System.Configuration.ConfigurationManager.AppSettings["ListenerPrefixes"];
+			ConnectionStringSettings connectionStringSettings = System.Configuration.ConfigurationManager.ConnectionStrings[_TaskPersistenceConnectionStringsKey];
+			return new TaskPersistenceSettings(connectionStringSettings);
+		}
 
-			if (!string.IsNullOrEmpty(setting))
+		private IList<ListenerPrefix> LoadListenerPrefixSettings()
+		{
+			string setting = System.Configuration.ConfigurationManager.AppSettings[_ListenerPrefixesAppSettingsKey];
+
+			if (string.IsNullOrWhiteSpace(setting))
 			{
-				string[] urls = setting.Split(new char[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+				setting = _DefaultListenerPrefix;
+			}
 
-				if (urls.Length > 0)
+			string[] urls = setting.Split(new char[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+			if (urls.Length == 0)
+			{
+				ElementInformation listenerPrefixesElement = GetAppSettingElementInformation(_ListenerPrefixesAppSettingsKey);
+				throw new ConfigurationErrorsException("The specified listener prefix setting contains invalid data.", listenerPrefixesElement.Source, listenerPrefixesElement.LineNumber);
+			}
+
+			var listenerPrefixesList = new List<ListenerPrefix>();
+
+			foreach (string url in urls)
+			{
+				ListenerPrefix prefix = null;
+
+				if (ListenerPrefix.TryCreate(url.Trim(), out prefix))
 				{
-					var acceptedPrefixes = new List<ListenerPrefix>();
-					foreach (string url in urls)
+					if (!prefix.Scheme.Equals(Uri.UriSchemeHttp) && !prefix.Scheme.Equals(Uri.UriSchemeHttps))
 					{
-						ListenerPrefix prefix = null;
-
-						if (ListenerPrefix.TryCreate(url.Trim(), out prefix))
-						{
-							if (prefix.Scheme.Equals(Uri.UriSchemeHttp) || prefix.Scheme.Equals(Uri.UriSchemeHttps))
-							{
-								acceptedPrefixes.Add(prefix);
-							}
-						}
+						ElementInformation listenerPrefixesElement = GetAppSettingElementInformation(_ListenerPrefixesAppSettingsKey);
+						throw new ConfigurationErrorsException(string.Format("The specified listener prefix, '{0}', must start with either {1} or {2}.", url.Trim(), Uri.UriSchemeHttp, Uri.UriSchemeHttps),
+							listenerPrefixesElement.Source,
+							listenerPrefixesElement.LineNumber);
 					}
 
-					if (acceptedPrefixes.Count > 0)
-					{
-						return acceptedPrefixes.ToArray();
-					}
+					listenerPrefixesList.Add(prefix);
+				}
+				else
+				{
+					ElementInformation listenerPrefixesElement = GetAppSettingElementInformation(_ListenerPrefixesAppSettingsKey);
+					throw new ConfigurationErrorsException(string.Format("The specified listener prefix, '{0}', is not valid.", url.Trim()),
+						listenerPrefixesElement.Source,
+						listenerPrefixesElement.LineNumber);
 				}
 			}
 
-			return new ListenerPrefix[] { new ListenerPrefix(_DefaultListenerPrefix) };
+			return listenerPrefixesList;
 		}
 
-		private UrlMatchDictionary<RevaleeUrlAuthorization> LoadUrlAuthorizations()
+		private IList<TimeSpan> LoadRetryIntervalSettings()
+		{
+			string setting = System.Configuration.ConfigurationManager.AppSettings[_RetryIntervalsAppSettingsKey];
+
+			if (string.IsNullOrWhiteSpace(setting))
+			{
+				setting = _DefaultRetryIntervals;
+			}
+
+			string[] intervals = setting.Split(new char[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+			if (intervals.Length == 0)
+			{
+				ElementInformation retryIntervalsElement = GetAppSettingElementInformation(_RetryIntervalsAppSettingsKey);
+				throw new ConfigurationErrorsException("The specified retry intervals setting contains invalid data.", retryIntervalsElement.Source, retryIntervalsElement.LineNumber);
+			}
+
+			var retryIntervalsList = new List<TimeSpan>();
+
+			foreach (string interval in intervals)
+			{
+				try
+				{
+					TimeSpan retryInterval = XmlConvert.ToTimeSpan(interval.Trim());
+
+					if (retryInterval < TimeSpan.Zero)
+					{
+						ElementInformation retryIntervalsElement = GetAppSettingElementInformation(_RetryIntervalsAppSettingsKey);
+						throw new ConfigurationErrorsException("A specified retry interval cannot be negative.", retryIntervalsElement.Source, retryIntervalsElement.LineNumber);
+					}
+
+					retryIntervalsList.Add(retryInterval);
+				}
+				catch (FormatException fex)
+				{
+					ElementInformation retryIntervalsElement = GetAppSettingElementInformation(_RetryIntervalsAppSettingsKey);
+					throw new ConfigurationErrorsException(string.Format("The specified retry interval, '{0}', is not a valid XML duration.", interval.Trim()),
+						fex,
+						retryIntervalsElement.Source,
+						retryIntervalsElement.LineNumber);
+				}
+			}
+
+			return retryIntervalsList;
+		}
+
+		private UrlMatchDictionary<RevaleeUrlAuthorization> LoadUrlAuthorizationSettings()
 		{
 			var authorizedTargets = new UrlMatchDictionary<RevaleeUrlAuthorization>();
 
@@ -142,7 +214,9 @@ namespace Revalee.Service
 						{
 							if (authorization.UrlPrefix.Port == listenerPrefix.Port)
 							{
-								throw new UriFormatException(string.Format("Cannot authorize callbacks to {0} since that port is used by this service.", authorization.UrlPrefix));
+								throw new ConfigurationErrorsException(string.Format("Cannot authorize callbacks to {0} since that port is used by this service.", authorization.UrlPrefix),
+									authorizationElement.ElementInformation.Source,
+									authorizationElement.ElementInformation.LineNumber);
 							}
 						}
 					}
@@ -152,6 +226,13 @@ namespace Revalee.Service
 			}
 
 			return authorizedTargets;
+		}
+
+		private static ElementInformation GetAppSettingElementInformation(string key)
+		{
+			System.Configuration.Configuration config = System.Configuration.ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+			AppSettingsSection section = (System.Configuration.AppSettingsSection)config.GetSection("appSettings");
+			return section.Settings[key].ElementInformation;
 		}
 
 		public void Dispose()

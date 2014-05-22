@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -55,13 +56,16 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AbortableThreadPool.cs" />
     <Compile Include="ApplicationFolderHelper.cs" />
     <Compile Include="AuthorizationHelper.cs" />
+    <Compile Include="RetryHeuristics.cs" />
     <Compile Include="CancelRequestHandler.cs" />
     <Compile Include="CommandLineInstaller.cs" />
     <Compile Include="CommandRouter.cs" />
@@ -81,6 +85,8 @@
     <Compile Include="IPNetwork.cs" />
     <Compile Include="ITaskPersistenceProvider.cs" />
     <Compile Include="ScheduledDictionary.cs" />
+    <Compile Include="TaskPersistenceProviderMapping.cs" />
+    <Compile Include="TaskPersistenceSettings.cs" />
     <Compile Include="TraceListenerLoggingProvider.cs" />
     <Compile Include="NullTaskPersistenceProvider.cs" />
     <Compile Include="TelemetryManager.cs" />

@@ -10,12 +10,26 @@ namespace Revalee.Service
 
 		public void WriteEntry(string message, TraceEventType severity)
 		{
-			_Log.TraceSource.TraceEvent(severity, 0, message);
+			try
+			{
+				_Log.TraceSource.TraceEvent(severity, 0, message);
+			}
+			catch (ObjectDisposedException)
+			{
+				// ignore trace attempt if the handler is already disposed
+			}
 		}
 
 		public void Flush()
 		{
-			_Log.TraceSource.Flush();
+			try
+			{
+				_Log.TraceSource.Flush();
+			}
+			catch (ObjectDisposedException)
+			{
+				// ignore flush attempt if the handler is already disposed
+			}
 		}
 
 		[HostProtection(SecurityAction.LinkDemand, Resources = HostProtectionResource.ExternalProcessMgmt)]
