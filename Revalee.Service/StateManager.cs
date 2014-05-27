@@ -60,13 +60,12 @@ namespace Revalee.Service
 				throw new ArgumentNullException("task");
 			}
 
-			_AwaitingTaskCollection.AddOrReplace(task.CallbackId, task, task.CallbackTime);
-
 			lock (_SyncRoot)
 			{
 				_PersistenceProvider.AddTask(task);
 			}
 
+			_AwaitingTaskCollection.AddOrReplace(task.CallbackId, task, task.CallbackTime);
 			Supervisor.Telemetry.IncrementAwaitingTasksValue();
 			ResetTaskAlarm();
 		}
