@@ -54,6 +54,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CallbackActionAttribute.cs" />
+    <Compile Include="CallbackStateCache.cs" />
     <Compile Include="RevaleeClientSettingsAttribute.cs" />
     <Compile Include="RevaleeControllerExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -485,6 +485,470 @@ namespace Revalee.Client.Mvc
 
 		#endregion Delay-based callbacks with cancellation token
 
+		#region Immediate callbacks
+
+		/// <summary>
+		/// Schedules an immediate callback.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackUri">An absolute <see cref="T:System.Uri" /> that will be requested on the callback.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static async Task<Guid> CallbackNowAsync(this Controller controller, Uri callbackUri, object state)
+		{
+			Guid callbackId = await SchedulingAgent.RequestCallbackAsync(callbackUri, DateTimeOffset.MinValue);
+			CallbackStateCache.StoreCallbackState(controller.HttpContext, callbackId, state, DateTime.Now.AddMinutes(10.0));
+			return callbackId;
+		}
+
+		/// <summary>
+		/// Schedules a callback to an action on this controller immediately.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionNowAsync(this Controller controller, string actionName, object state)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, null);
+			return CallbackNowAsync(controller, callbackUri, state);
+		}
+
+		/// <summary>
+		/// Schedules a callback to a controller action immediately.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionNowAsync(this Controller controller, string actionName, string controllerName, object state)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, null);
+			return CallbackNowAsync(controller, callbackUri, state);
+		}
+
+		/// <summary>
+		/// Schedules a callback to an action on this controller immediately.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionNowAsync(this Controller controller, string actionName, RouteValueDictionary routeValues, object state)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, routeValues);
+			return CallbackNowAsync(controller, callbackUri, state);
+		}
+
+		/// <summary>
+		/// Schedules a callback to an action on this controller immediately.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionNowAsync(this Controller controller, string actionName, object routeValues, object state)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, new RouteValueDictionary(routeValues));
+			return CallbackNowAsync(controller, callbackUri, state);
+		}
+
+		/// <summary>
+		/// Schedules a callback to a controller action immediately.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionNowAsync(this Controller controller, string actionName, string controllerName, RouteValueDictionary routeValues, object state)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, routeValues);
+			return CallbackNowAsync(controller, callbackUri, state);
+		}
+
+		/// <summary>
+		/// Schedules a callback to a controller action immediately.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionNowAsync(this Controller controller, string actionName, string controllerName, object routeValues, object state)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, new RouteValueDictionary(routeValues));
+			return CallbackNowAsync(controller, callbackUri, state);
+		}
+
+		#endregion Immediate callbacks
+
+		#region Immediate callbacks with cancellation token
+
+		/// <summary>
+		/// Schedules an immediate callback.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackUri">An absolute <see cref="T:System.Uri" /> that will be requested on the callback.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static async Task<Guid> CallbackNowAsync(this Controller controller, Uri callbackUri, object state, CancellationToken cancellationToken)
+		{
+			Guid callbackId = await SchedulingAgent.RequestCallbackAsync(callbackUri, DateTimeOffset.MinValue, cancellationToken);
+			CallbackStateCache.StoreCallbackState(controller.HttpContext, callbackId, state, DateTime.Now.AddMinutes(10.0));
+			return callbackId;
+		}
+
+		/// <summary>
+		/// Schedules a callback to an action on this controller immediately.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionNowAsync(this Controller controller, string actionName, object state, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, null);
+			return CallbackNowAsync(controller, callbackUri, state, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to a controller action immediately.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionNowAsync(this Controller controller, string actionName, string controllerName, object state, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, null);
+			return CallbackNowAsync(controller, callbackUri, state, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to an action on this controller immediately.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionNowAsync(this Controller controller, string actionName, RouteValueDictionary routeValues, object state, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, routeValues);
+			return CallbackNowAsync(controller, callbackUri, state, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to an action on this controller immediately.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionNowAsync(this Controller controller, string actionName, object routeValues, object state, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, new RouteValueDictionary(routeValues));
+			return CallbackNowAsync(controller, callbackUri, state, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to a controller action immediately.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionNowAsync(this Controller controller, string actionName, string controllerName, RouteValueDictionary routeValues, object state, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, routeValues);
+			return CallbackNowAsync(controller, callbackUri, state, cancellationToken);
+		}
+
+		/// <summary>
+		/// Schedules a callback to a controller action immediately.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="state">An <see cref="T:System.Object" /> containing the data to be used upon receiving the callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Guid" /> that serves as the identifier for the successfully scheduled callback.</returns>
+		public static Task<Guid> CallbackToActionNowAsync(this Controller controller, string actionName, string controllerName, object routeValues, object state, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, new RouteValueDictionary(routeValues));
+			return CallbackNowAsync(controller, callbackUri, state, cancellationToken);
+		}
+
+		#endregion Immediate callbacks with cancellation token
+
+		#region Callback cancellation
+
+		/// <summary>
+		/// Cancels a previously scheduled callback.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="callbackUri">The requested absolute <see cref="T:System.Uri" /> of the previously scheduled callback.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static async Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, Uri callbackUri)
+		{
+			bool success = await SchedulingAgent.CancelCallbackAsync(callbackId, callbackUri);
+
+			if (success)
+			{
+				CallbackStateCache.DeleteCallbackState(controller.HttpContext, callbackId);
+			}
+
+			return success;
+		}
+
+		/// <summary>
+		/// Cancels a previously scheduled callback to an action on this controller.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, string actionName)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, null);
+			return CancelCallbackAsync(controller, callbackId, callbackUri);
+		}
+
+		/// <summary>
+		/// Cancels a previously scheduled callback to a controller action.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, string actionName, string controllerName)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, null);
+			return CancelCallbackAsync(controller, callbackId, callbackUri);
+		}
+
+		/// <summary>
+		/// Cancels a previously scheduled callback to an action on this controller.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, string actionName, RouteValueDictionary routeValues)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, routeValues);
+			return CancelCallbackAsync(controller, callbackId, callbackUri);
+		}
+
+		/// <summary>
+		/// Cancels a previously scheduled callback to an action on this controller.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, string actionName, object routeValues)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, new RouteValueDictionary(routeValues));
+			return CancelCallbackAsync(controller, callbackId, callbackUri);
+		}
+
+		/// <summary>
+		/// Cancels a previously scheduled callback to a controller action.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, string actionName, string controllerName, RouteValueDictionary routeValues)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, routeValues);
+			return CancelCallbackAsync(controller, callbackId, callbackUri);
+		}
+
+		/// <summary>
+		/// Cancels a previously scheduled callback to a controller action.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, string actionName, string controllerName, object routeValues)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, new RouteValueDictionary(routeValues));
+			return CancelCallbackAsync(controller, callbackId, callbackUri);
+		}
+
+		#endregion Callback cancellation
+
+		#region Callback cancellation with cancellation token
+
+		/// <summary>
+		/// Cancels a previously scheduled callback.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="callbackUri">The requested absolute <see cref="T:System.Uri" /> of the previously scheduled callback.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static async Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, Uri callbackUri, CancellationToken cancellationToken)
+		{
+			bool success = await SchedulingAgent.CancelCallbackAsync(callbackId, callbackUri, cancellationToken);
+
+			if (!cancellationToken.IsCancellationRequested && success)
+			{
+				CallbackStateCache.DeleteCallbackState(controller.HttpContext, callbackId);
+			}
+
+			return success;
+		}
+
+		/// <summary>
+		/// Cancels a previously scheduled callback to an action on this controller.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, string actionName, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, null);
+			return CancelCallbackAsync(controller, callbackId, callbackUri, cancellationToken);
+		}
+
+		/// <summary>
+		/// Cancels a previously scheduled callback to a controller action.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, string actionName, string controllerName, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, null);
+			return CancelCallbackAsync(controller, callbackId, callbackUri, cancellationToken);
+		}
+
+		/// <summary>
+		/// Cancels a previously scheduled callback to an action on this controller.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, string actionName, RouteValueDictionary routeValues, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, routeValues);
+			return CancelCallbackAsync(controller, callbackId, callbackUri, cancellationToken);
+		}
+
+		/// <summary>
+		/// Cancels a previously scheduled callback to an action on this controller.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, string actionName, object routeValues, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, null, new RouteValueDictionary(routeValues));
+			return CancelCallbackAsync(controller, callbackId, callbackUri, cancellationToken);
+		}
+
+		/// <summary>
+		/// Cancels a previously scheduled callback to a controller action.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, string actionName, string controllerName, RouteValueDictionary routeValues, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, routeValues);
+			return CancelCallbackAsync(controller, callbackId, callbackUri, cancellationToken);
+		}
+
+		/// <summary>
+		/// Cancels a previously scheduled callback to a controller action.
+		/// </summary>
+		/// <param name="controller">The <see cref="T:System.Web.Mvc.Controller" /> instance that this method extends.</param>
+		/// <param name="callbackId">The <see cref="T:System.Guid" /> that identifies the previously scheduled callback.</param>
+		/// <param name="actionName">The name of the action.</param>
+		/// <param name="controllerName">The name of the controller.</param>
+		/// <param name="routeValues">The parameters for a route.</param>
+		/// <param name="cancellationToken">A <see cref="T:System.Threading.CancellationToken" /> that controls the cancellation of the operation.</param>
+		/// <returns>A task that represents the asynchronous operation.
+		/// The task result contains the <see cref="T:System.Boolean" /> that will indicate true if the cancellation was processed normally.</returns>
+		public static Task<bool> CancelCallbackAsync(this Controller controller, Guid callbackId, string actionName, string controllerName, object routeValues, CancellationToken cancellationToken)
+		{
+			Uri callbackUri = BuildCallbackUri(controller, actionName, controllerName, new RouteValueDictionary(routeValues));
+			return CancelCallbackAsync(controller, callbackId, callbackUri, cancellationToken);
+		}
+
+		#endregion Callback cancellation with cancellation token
+
 		#region Uri construction
 
 		private static Uri BuildCallbackUri(Controller controller, string actionName, string controllerName, RouteValueDictionary routeValues)

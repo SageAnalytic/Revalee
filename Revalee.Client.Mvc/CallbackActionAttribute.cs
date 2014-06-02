@@ -27,6 +27,7 @@ SOFTWARE.
 #endregion License
 
 using System;
+using System.Linq;
 using System.Web.Mvc;
 
 namespace Revalee.Client.Mvc
@@ -35,7 +36,7 @@ namespace Revalee.Client.Mvc
 	/// Represents an attribute that will restrict access to previously requested callbacks.
 	/// </summary>
 	[AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-	public sealed class CallbackActionAttribute : FilterAttribute, IAuthorizationFilter
+	public sealed class CallbackActionAttribute : ActionFilterAttribute, IAuthorizationFilter
 	{
 		/// <summary>
 		/// Called when a process requests authorization for the marked callback action.
@@ -54,6 +55,50 @@ namespace Revalee.Client.Mvc
 				|| !RevaleeRegistrar.ValidateCallback(filterContext.HttpContext.Request))
 			{
 				filterContext.Result = new HttpUnauthorizedResult();
+			}
+		}
+
+		/// <summary>
+		/// Called before the action executes to supply cached state information if present.
+		/// </summary>
+		/// <param name="filterContext">The filter context, which encapsulates information for using <see cref="T:Revalee.Client.Mvc.CallbackActionAttribute" />.</param>
+		public override void OnActionExecuting(ActionExecutingContext filterContext)
+		{
+			base.OnActionExecuting(filterContext);
+
+			if (filterContext == null)
+			{
+				throw new ArgumentNullException("filterContext");
+			}
+
+			const string callbackIdFormParameterName = "callbackId";
+			const string stateActionParameterName = "state";
+
+			if (filterContext.HttpContext != null
+				&& filterContext.HttpContext.Request != null
+				&& filterContext.ActionParameters != null
+				&& filterContext.ActionDescriptor != null
+				)
+			{
+				string callbackId = filterContext.HttpContext.Request.Form[callbackIdFormParameterName];
+
+				if (!string.IsNullOrEmpty(callbackId))
+				{
+					if (filterContext.ActionParameters.ContainsKey(stateActionParameterName))
+					{
+						object cachedState = CallbackStateCache.RecoverCallbackState(filterContext.HttpContext, callbackId);
+
+						if (cachedState != null)
+						{
+							ParameterDescriptor stateParameter = filterContext.ActionDescriptor.GetParameters().Where(p => string.Equals(p.ParameterName, stateActionParameterName, StringComparison.OrdinalIgnoreCase)).SingleOrDefault();
+
+							if (stateParameter != null && stateParameter.ParameterType.IsAssignableFrom(cachedState.GetType()))
+							{
+								filterContext.ActionParameters[stateActionParameterName] = cachedState;
+							}
+						}
+					}
+				}
 			}
 		}
 	}

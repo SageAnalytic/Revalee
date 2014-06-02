@@ -114,9 +114,81 @@ namespace Revalee.Client.Mvc
 			}
 		}
 
+		public static Task<bool> CancelCallbackAsync(Guid callbackId, Uri callbackUri)
+		{
+			return CancelCallbackAsync(callbackId, callbackUri, CancellationToken.None);
+		}
+
+		public async static Task<bool> CancelCallbackAsync(Guid callbackId, Uri callbackUri, CancellationToken cancellationToken)
+		{
+			if (Guid.Empty.Equals(callbackId))
+			{
+				throw new ArgumentNullException("callbackId");
+			}
+
+			if (callbackUri == null)
+			{
+				throw new ArgumentNullException("callbackUri");
+			}
+
+			if (!callbackUri.IsAbsoluteUri)
+			{
+				throw new ArgumentException("Callback Uri is not an absolute Uri.", "callbackUri");
+			}
+
+			var serviceBaseUri = new ServiceBaseUri();
+
+			try
+			{
+				bool isDisposalRequired;
+				HttpClient httpClient = AcquireHttpClient(out isDisposalRequired);
+
+				try
+				{
+					Uri requestUri = BuildCancelRequestUri(serviceBaseUri, callbackId, callbackUri);
+					using (var requestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri))
+					{
+						using (HttpResponseMessage response = await httpClient.SendAsync(requestMessage, HttpCompletionOption.ResponseContentRead, cancellationToken).ConfigureAwait(false))
+						{
+							if (response.IsSuccessStatusCode)
+							{
+								return true;
+							}
+							else
+							{
+								throw new RevaleeRequestException(serviceBaseUri, callbackUri,
+									new WebException(string.Format("The remote server returned an error: ({0}) {1}.",
+										(int)response.StatusCode, response.ReasonPhrase), WebExceptionStatus.ProtocolError));
+							}
+						}
+					}
+				}
+				finally
+				{
+					if (isDisposalRequired)
+					{
+						httpClient.Dispose();
+					}
+				}
+			}
+			catch (AggregateException aex)
+			{
+				throw new RevaleeRequestException(serviceBaseUri, callbackUri, aex.Flatten().InnerException);
+			}
+			catch (WebException wex)
+			{
+				throw new RevaleeRequestException(serviceBaseUri, callbackUri, wex);
+			}
+		}
+
 		private static Uri BuildScheduleRequestUri(Uri serviceBaseUri, DateTime callbackUtcTime, Uri callbackUri)
 		{
 			return new Uri(string.Format(CultureInfo.InvariantCulture, "{0}://{1}/Schedule?CallbackTime={2:s}Z&CallbackUrl={3}", serviceBaseUri.Scheme, serviceBaseUri.Authority, callbackUtcTime, PrepareCallbackUrl(callbackUri)), UriKind.Absolute);
+		}
+
+		private static Uri BuildCancelRequestUri(Uri serviceBaseUri, Guid callbackId, Uri callbackUri)
+		{
+			return new Uri(string.Format(CultureInfo.InvariantCulture, "{0}://{1}/Cancel?CallbackId={2:D}Z&CallbackUrl={3}", serviceBaseUri.Scheme, serviceBaseUri.Authority, callbackId, PrepareCallbackUrl(callbackUri)), UriKind.Absolute);
 		}
 
 		private static string PrepareCallbackUrl(Uri callbackUri)
