@@ -10,8 +10,6 @@ namespace Revalee.Service
 {
 	internal sealed class InteractiveExecution
 	{
-		private const string _RequiredServiceName = "Revalee.Service";
-
 		private static string _ConsoleStatusMessage = string.Empty;
 
 		private InteractiveExecution()
@@ -144,10 +142,8 @@ namespace Revalee.Service
 
 				if (keypress.Key == ConsoleKey.Y)
 				{
-					using (var installer = new CommandLineInstaller())
-					{
-						installer.Install();
-					}
+					var installer = new CommandLineInstaller();
+					installer.Install();
 
 					Console.WriteLine();
 					Console.WriteLine();
@@ -170,7 +166,7 @@ namespace Revalee.Service
 
 		private static bool IsServiceInstalled()
 		{
-			ServiceController serviceController = new ServiceController(_RequiredServiceName);
+			ServiceController serviceController = new ServiceController(Supervisor.Configuration.ServiceName);
 			try
 			{
 				string ServiceName = serviceController.ServiceName;

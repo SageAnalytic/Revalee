@@ -65,6 +65,9 @@
     <Compile Include="AbortableThreadPool.cs" />
     <Compile Include="ApplicationFolderHelper.cs" />
     <Compile Include="AuthorizationHelper.cs" />
+    <Compile Include="ITelemetryAdapter.cs" />
+    <Compile Include="NullTelemetryAdapter.cs" />
+    <Compile Include="PerformanceCounterTelemetryAdapter.cs" />
     <Compile Include="RetryHeuristics.cs" />
     <Compile Include="CancelRequestHandler.cs" />
     <Compile Include="CommandLineInstaller.cs" />

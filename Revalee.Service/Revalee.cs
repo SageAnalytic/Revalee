@@ -13,6 +13,7 @@ namespace Revalee.Service
 		public Revalee()
 		{
 			InitializeComponent();
+			this.ServiceName = Supervisor.Configuration.ServiceName;
 
 			if (Environment.OSVersion.Version.Major >= 6)
 			{
@@ -118,10 +119,8 @@ namespace Revalee.Service
 				{
 					try
 					{
-						using (var installer = new CommandLineInstaller())
-						{
-							installer.Install();
-						}
+						var installer = new CommandLineInstaller();
+						installer.Install();
 					}
 					catch (Exception ex)
 					{
@@ -134,10 +133,8 @@ namespace Revalee.Service
 				{
 					try
 					{
-						using (var installer = new CommandLineInstaller())
-						{
-							installer.Uninstall();
-						}
+						var installer = new CommandLineInstaller();
+						installer.Uninstall();
 					}
 					catch (Exception ex)
 					{

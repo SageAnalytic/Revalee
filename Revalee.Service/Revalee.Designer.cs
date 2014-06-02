@@ -34,7 +34,7 @@
 			this.AutoLog = false;
 			this.CanPauseAndContinue = true;
 			this.CanShutdown = true;
-			this.ServiceName = "Revalee";
+			this.ServiceName = "Revalee.Service";
 
 		}
 

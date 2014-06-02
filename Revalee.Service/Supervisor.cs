@@ -179,7 +179,7 @@ namespace Revalee.Service
 				{
 					_IsStarted = true;
 					_IsPaused = false;
-					_ConfigurationManager.Initialize();
+					_TelemetryManager.Activate();
 					_StateManager.Initialize();
 					_RequestManager.Activate();
 					_LoggingProvider.WriteEntry("Revalee service is active and awaiting requests." + GetProductVersionTag(), TraceEventType.Information);
@@ -199,6 +199,7 @@ namespace Revalee.Service
 					_TimeManager.Stop();
 					_WorkManager.Halt();
 					_StateManager.Suspend();
+					_TelemetryManager.Deactivate();
 
 					if (isShutdown)
 					{
@@ -286,15 +287,6 @@ namespace Revalee.Service
 				try
 				{
 					_TelemetryManager.Dispose();
-				}
-				catch { }
-			}
-
-			if (_ConfigurationManager != null)
-			{
-				try
-				{
-					_ConfigurationManager.Dispose();
 				}
 				catch { }
 			}

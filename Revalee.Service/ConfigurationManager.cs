@@ -1,18 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Reflection;
 using System.Xml;
 
 namespace Revalee.Service
 {
-	internal class ConfigurationManager : IDisposable
+	internal class ConfigurationManager
 	{
 		private const string _DefaultListenerPrefix = "http://+:46200/";
 		private const string _DefaultRetryIntervals = "PT1S,PT1M,PT1H";
+
+		private const string _ServiceNameAppSettingsKey = "ServiceName";
 		private const string _ListenerPrefixesAppSettingsKey = "ListenerPrefixes";
 		private const string _RetryIntervalsAppSettingsKey = "RetryIntervals";
 		private const string _TaskPersistenceConnectionStringsKey = "TaskPersistence";
 
+		private string _ServiceName;
 		private TaskPersistenceSettings _TaskPersistenceSettings;
 		private UrlMatchDictionary<RevaleeUrlAuthorization> _AuthorizedTargets;
 		private IList<ListenerPrefix> _ListenerPrefixes;
@@ -20,19 +24,25 @@ namespace Revalee.Service
 
 		public ConfigurationManager()
 		{
+			_ServiceName = LoadServiceNameSettings();
+			_ListenerPrefixes = LoadListenerPrefixSettings();
+			_RetryIntervals = LoadRetryIntervalSettings();
+			_AuthorizedTargets = LoadUrlAuthorizationSettings(_ListenerPrefixes);
+			_TaskPersistenceSettings = LoadTaskPersistenceSettings();
+		}
+
+		public string ServiceName
+		{
+			get
+			{
+				return _ServiceName;
+			}
 		}
 
 		public TaskPersistenceSettings TaskPersistenceSettings
 		{
 			get
 			{
-				if (_TaskPersistenceSettings == null)
-				{
-					TaskPersistenceSettings persistenceSettings = LoadTaskPersistenceSettings();
-					_TaskPersistenceSettings = persistenceSettings;
-					return persistenceSettings;
-				}
-
 				return _TaskPersistenceSettings;
 			}
 		}
@@ -41,13 +51,6 @@ namespace Revalee.Service
 		{
 			get
 			{
-				if (_AuthorizedTargets == null)
-				{
-					UrlMatchDictionary<RevaleeUrlAuthorization> authorizedTargets = LoadUrlAuthorizationSettings();
-					_AuthorizedTargets = authorizedTargets;
-					return authorizedTargets;
-				}
-
 				return _AuthorizedTargets;
 			}
 		}
@@ -56,13 +59,6 @@ namespace Revalee.Service
 		{
 			get
 			{
-				if (_ListenerPrefixes == null)
-				{
-					IList<ListenerPrefix> listenerPrefixes = LoadListenerPrefixSettings();
-					_ListenerPrefixes = listenerPrefixes;
-					return listenerPrefixes;
-				}
-
 				return _ListenerPrefixes;
 			}
 		}
@@ -71,37 +67,36 @@ namespace Revalee.Service
 		{
 			get
 			{
-				if (_RetryIntervals == null)
-				{
-					IList<TimeSpan> retryIntervals = LoadRetryIntervalSettings();
-					_RetryIntervals = retryIntervals;
-					return retryIntervals;
-				}
-
 				return _RetryIntervals;
 			}
 		}
 
-		public void Initialize()
-		{
-			_ListenerPrefixes = LoadListenerPrefixSettings();
-			_RetryIntervals = LoadRetryIntervalSettings();
-			_AuthorizedTargets = LoadUrlAuthorizationSettings();
-			_TaskPersistenceSettings = LoadTaskPersistenceSettings();
-		}
-
 		public void ReloadAuthorizedTargets()
 		{
-			_AuthorizedTargets = LoadUrlAuthorizationSettings();
+			_AuthorizedTargets = LoadUrlAuthorizationSettings(_ListenerPrefixes);
 		}
 
-		private TaskPersistenceSettings LoadTaskPersistenceSettings()
+		private static string LoadServiceNameSettings()
+		{
+			string setting = System.Configuration.ConfigurationManager.AppSettings[_ServiceNameAppSettingsKey];
+
+			if (string.IsNullOrWhiteSpace(setting))
+			{
+				return GetExecutingServiceName();
+			}
+			else
+			{
+				return setting.Trim();
+			}
+		}
+
+		private static TaskPersistenceSettings LoadTaskPersistenceSettings()
 		{
 			ConnectionStringSettings connectionStringSettings = System.Configuration.ConfigurationManager.ConnectionStrings[_TaskPersistenceConnectionStringsKey];
 			return new TaskPersistenceSettings(connectionStringSettings);
 		}
 
-		private IList<ListenerPrefix> LoadListenerPrefixSettings()
+		private static IList<ListenerPrefix> LoadListenerPrefixSettings()
 		{
 			string setting = System.Configuration.ConfigurationManager.AppSettings[_ListenerPrefixesAppSettingsKey];
 
@@ -148,7 +143,7 @@ namespace Revalee.Service
 			return listenerPrefixesList;
 		}
 
-		private IList<TimeSpan> LoadRetryIntervalSettings()
+		private static IList<TimeSpan> LoadRetryIntervalSettings()
 		{
 			string setting = System.Configuration.ConfigurationManager.AppSettings[_RetryIntervalsAppSettingsKey];
 
@@ -194,7 +189,7 @@ namespace Revalee.Service
 			return retryIntervalsList;
 		}
 
-		private UrlMatchDictionary<RevaleeUrlAuthorization> LoadUrlAuthorizationSettings()
+		private static UrlMatchDictionary<RevaleeUrlAuthorization> LoadUrlAuthorizationSettings(IList<ListenerPrefix> listenerPrefixes)
 		{
 			var authorizedTargets = new UrlMatchDictionary<RevaleeUrlAuthorization>();
 
@@ -210,7 +205,7 @@ namespace Revalee.Service
 
 					if (authorization.UrlPrefix.IsLoopback)
 					{
-						foreach (ListenerPrefix listenerPrefix in _ListenerPrefixes)
+						foreach (ListenerPrefix listenerPrefix in listenerPrefixes)
 						{
 							if (authorization.UrlPrefix.Port == listenerPrefix.Port)
 							{
@@ -235,14 +230,9 @@ namespace Revalee.Service
 			return section.Settings[key].ElementInformation;
 		}
 
-		public void Dispose()
+		private static string GetExecutingServiceName()
 		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
+			return Assembly.GetExecutingAssembly().GetName().Name;
 		}
 	}
 }

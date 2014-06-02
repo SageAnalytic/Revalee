@@ -15,10 +15,8 @@ namespace Revalee.Service
 			var taskList = new SortedList<RevaleeTask, RevaleeTask>();
 			TaskPersistenceSettings persistenceSettings;
 
-			using (var config = new ConfigurationManager())
-			{
-				persistenceSettings = config.TaskPersistenceSettings;
-			}
+			var config = new ConfigurationManager();
+			persistenceSettings = config.TaskPersistenceSettings;
 
 			// Load persisted tasks from the persistence provider
 			ITaskPersistenceProvider persistenceProvider = persistenceSettings.CreateProvider();

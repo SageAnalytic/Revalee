@@ -11,7 +11,7 @@ using System.ServiceProcess;
 
 namespace Revalee.Service
 {
-	internal class CommandLineInstaller : IDisposable
+	internal class CommandLineInstaller
 	{
 		private const string _NetworkServiceAccountSID = "S-1-5-20";
 		private const string _EveryoneAccountSID = "S-1-1-0";
@@ -25,9 +25,11 @@ namespace Revalee.Service
 
 			ManagedInstallerClass.InstallHelper(new string[] { Assembly.GetExecutingAssembly().Location });
 
-			RegisterHttpPrefix();
+			RegisterHttpListenerPrefix();
 
 			SetDefaultDataFolderPermissions();
+
+			ConfigureTaskPersistenceProvider();
 
 #if !DEBUG
 			StartService();
@@ -40,12 +42,12 @@ namespace Revalee.Service
 
 			StopService();
 
-			UnRegisterHttpPrefix();
+			UnRegisterHttpListenerPrefix();
 
 			ManagedInstallerClass.InstallHelper(new string[] { "/u", Assembly.GetExecutingAssembly().Location });
 		}
 
-		private void RegisterHttpPrefix()
+		private void RegisterHttpListenerPrefix()
 		{
 			if (Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 5)
 			{
@@ -107,7 +109,7 @@ namespace Revalee.Service
 			}
 		}
 
-		private void UnRegisterHttpPrefix()
+		private void UnRegisterHttpListenerPrefix()
 		{
 			if (Environment.OSVersion.Platform == PlatformID.Win32NT && Environment.OSVersion.Version.Major >= 5)
 			{
@@ -229,7 +231,7 @@ namespace Revalee.Service
 
 			try
 			{
-				EventLog.SourceExists(GetServiceName());
+				EventLog.SourceExists(_Configuration.ServiceName);
 			}
 			catch (SecurityException ex)
 			{
@@ -237,9 +239,14 @@ namespace Revalee.Service
 			}
 		}
 
+		private void ConfigureTaskPersistenceProvider()
+		{
+			// No configurable options currently available
+		}
+
 		private void StartService()
 		{
-			var sc = new ServiceController(GetServiceName());
+			var sc = new ServiceController(_Configuration.ServiceName);
 
 			try
 			{
@@ -251,7 +258,7 @@ namespace Revalee.Service
 			}
 			catch (System.ServiceProcess.TimeoutException)
 			{
-				Console.Write(string.Format(CultureInfo.InvariantCulture, "Could not start the {0} service.", GetServiceName()));
+				Console.Write(string.Format(CultureInfo.InvariantCulture, "Could not start the {0} service.", _Configuration.ServiceName));
 			}
 			finally
 			{
@@ -261,7 +268,7 @@ namespace Revalee.Service
 
 		private void StopService()
 		{
-			var sc = new ServiceController(GetServiceName());
+			var sc = new ServiceController(_Configuration.ServiceName);
 
 			try
 			{
@@ -276,7 +283,7 @@ namespace Revalee.Service
 			}
 			catch (System.ServiceProcess.TimeoutException)
 			{
-				Console.Write(string.Format(CultureInfo.InvariantCulture, "Could not stop the {0} service.", GetServiceName()));
+				Console.Write(string.Format(CultureInfo.InvariantCulture, "Could not stop the {0} service.", _Configuration.ServiceName));
 			}
 			finally
 			{
@@ -326,25 +333,6 @@ namespace Revalee.Service
 #endif
 
 			return accountName;
-		}
-
-		private static string GetServiceName()
-		{
-			return Assembly.GetExecutingAssembly().GetName().Name;
-		}
-
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
-			if (disposing)
-			{
-				_Configuration.Dispose();
-			}
 		}
 	}
 }

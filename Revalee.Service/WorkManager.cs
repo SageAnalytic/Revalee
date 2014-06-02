@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Net;
+using System.Security;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -114,10 +115,10 @@ namespace Revalee.Service
 					{
 						ProcessWebException(task, wex);
 					}
-					catch (Exception ex)
+					catch (AggregateException aex)
 					{
 						// Nonretryable error
-						CompleteFailedTask(task, ex);
+						CompleteFailedTask(task, aex);
 					}
 				});
 			}
@@ -125,10 +126,10 @@ namespace Revalee.Service
 			{
 				ProcessWebException(task, wex);
 			}
-			catch (Exception ex)
+			catch (SecurityException sex)
 			{
 				// Nonretryable error
-				CompleteFailedTask(task, ex);
+				CompleteFailedTask(task, sex);
 			}
 		}
 
