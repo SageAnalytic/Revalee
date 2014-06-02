@@ -29,7 +29,6 @@ SOFTWARE.
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -51,6 +50,9 @@ namespace Revalee.Client.Validation
 			Client,
 			Server
 		}
+
+		private AuthorizationCipher()
+		{ }
 
 		public AuthorizationCipher(CipherSource source, short version, byte[] nonce, byte[] cryptogram)
 		{
@@ -98,39 +100,41 @@ namespace Revalee.Client.Validation
 				return false;
 			}
 
-			try
+			byte[] nonce = ConvertHexToByteArray(cipherValues["n"]);
+
+			if (nonce == null || nonce.Length == 0)
 			{
-				byte[] nonce = ConvertHexToByteArray(cipherValues["n"]);
-
-				CipherSource source;
-				byte[] cryptogram;
-
-				if (cipherValues.ContainsKey("s"))
-				{
-					source = CipherSource.Server;
-					cryptogram = ConvertHexToByteArray(cipherValues["s"]);
-				}
-				else if (cipherValues.ContainsKey("c"))
-				{
-					source = CipherSource.Client;
-					cryptogram = ConvertHexToByteArray(cipherValues["c"]);
-				}
-				else
-				{
-					decodedCipher = null;
-					return false;
-				}
-
-				decodedCipher = new AuthorizationCipher(source, version, nonce, cryptogram);
-				return true;
-			}
-			catch (Exception)
-			{
-				// Prevent malicious programs from probing cipher handling by analyzing execution time of failures
-				ObfuscateExecutionTime();
 				decodedCipher = null;
 				return false;
 			}
+
+			CipherSource source;
+			byte[] cryptogram;
+
+			if (cipherValues.ContainsKey("s"))
+			{
+				source = CipherSource.Server;
+				cryptogram = ConvertHexToByteArray(cipherValues["s"]);
+			}
+			else if (cipherValues.ContainsKey("c"))
+			{
+				source = CipherSource.Client;
+				cryptogram = ConvertHexToByteArray(cipherValues["c"]);
+			}
+			else
+			{
+				decodedCipher = null;
+				return false;
+			}
+
+			if (cryptogram == null || cryptogram.Length == 0)
+			{
+				decodedCipher = null;
+				return false;
+			}
+
+			decodedCipher = new AuthorizationCipher() { Source = source, Version = version, Nonce = nonce, Cryptogram = cryptogram };
+			return true;
 		}
 
 		public override string ToString()
@@ -140,21 +144,53 @@ namespace Revalee.Client.Validation
 			cipher.Append(this.Version.ToString(CultureInfo.InvariantCulture));
 			cipher.Append(",n=");
 			cipher.Append(ConvertByteArrayToHex(this.Nonce));
-			cipher.Append(",");
-			cipher.Append(this.Source == CipherSource.Server ? "s" : "c");
-			cipher.Append("=");
+			cipher.Append(this.Source == CipherSource.Server ? ",s=" : ",c=");
 			cipher.Append(ConvertByteArrayToHex(this.Cryptogram));
 			return cipher.ToString();
 		}
 
 		private static byte[] ConvertHexToByteArray(string value)
 		{
-			return SoapHexBinary.Parse(value).Value;
+			if (string.IsNullOrEmpty(value) || value.Length % 2 != 0)
+			{
+				return null;
+			}
+
+			int byteLength = value.Length >> 1;
+			byte[] byteArray = new byte[byteLength];
+
+			for (int byteIndex = 0; byteIndex < byteLength; byteIndex++)
+			{
+				byte leftNibble;
+
+				if (!byte.TryParse(value[byteIndex << 1].ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out leftNibble))
+				{
+					return null;
+				}
+
+				byte rightNibble;
+
+				if (!byte.TryParse(value[(byteIndex << 1) + 1].ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out rightNibble))
+				{
+					return null;
+				}
+
+				byteArray[byteIndex] = (byte)((((int)leftNibble) << 4) | (int)rightNibble);
+			}
+
+			return byteArray;
 		}
 
 		private static string ConvertByteArrayToHex(byte[] value)
 		{
-			return (new SoapHexBinary(value)).ToString();
+			var output = new StringBuilder(value.Length * 2);
+
+			for (int i = 0; i < value.Length; i++)
+			{
+				output.AppendFormat(CultureInfo.InvariantCulture, "{0:X2}", value[i]);
+			}
+
+			return output.ToString();
 		}
 
 		private static IDictionary<string, string> ParseMultiValueHeader(string headerValue)
@@ -176,18 +212,6 @@ namespace Revalee.Client.Validation
 			}
 
 			return dictionary;
-		}
-
-		public static void ObfuscateExecutionTime()
-		{
-			byte[] milliseconds = new byte[2];
-
-			using (var rng = new RNGCryptoServiceProvider())
-			{
-				rng.GetBytes(milliseconds);
-			}
-
-			Thread.Sleep(Math.Abs(milliseconds[0] + milliseconds[1]));
 		}
 	}
 }
