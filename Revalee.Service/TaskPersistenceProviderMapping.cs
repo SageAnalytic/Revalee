@@ -13,7 +13,7 @@ namespace Revalee.Service
 	 * System.Data.OracleClient
 	 */
 
-	internal class TaskPersistenceProviderMapping
+	internal static class TaskPersistenceProviderMapping
 	{
 		private static IDictionary<string, Type> _ProviderMappings = LoadProviderMappings();
 

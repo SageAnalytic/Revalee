@@ -28,15 +28,21 @@ namespace Revalee.Service
 				throw new ArgumentNullException("telemetryAdapter");
 			}
 
-			if (_Adapter == _EmptyAdapter)
+			if (_Adapter != _EmptyAdapter)
 			{
-				_Adapter = telemetryAdapter;
+				_Adapter.Dispose();
 			}
+
+			_Adapter = telemetryAdapter;
 		}
 
 		public void Deactivate()
 		{
-			_Adapter = _EmptyAdapter;
+			if (_Adapter != _EmptyAdapter)
+			{
+				_Adapter.Dispose();
+				_Adapter = _EmptyAdapter;
+			}
 		}
 
 		public void SetAwaitingTasksValue(int count)
@@ -89,7 +95,10 @@ namespace Revalee.Service
 		{
 			if (disposing)
 			{
-				_Adapter.Dispose();
+				if (_Adapter != _EmptyAdapter)
+				{
+					_Adapter.Dispose();
+				}
 			}
 		}
 	}

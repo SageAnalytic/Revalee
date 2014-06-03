@@ -300,7 +300,7 @@ namespace Revalee.Service
 			return AuthorizationHelper.ConstructResponse(requestCipher, callbackId);
 		}
 
-		private CallbackResult DetermineResult(HttpStatusCode statusCode)
+		private static CallbackResult DetermineResult(HttpStatusCode statusCode)
 		{
 			switch (statusCode)
 			{
