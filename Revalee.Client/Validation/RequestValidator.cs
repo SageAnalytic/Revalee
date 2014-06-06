@@ -46,6 +46,7 @@ namespace Revalee.Client.Validation
 		/// </summary>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A cipher value for this callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
 		public static string Issue(Uri callbackUri)
 		{
 			if (callbackUri == null || string.IsNullOrEmpty(callbackUri.OriginalString))

@@ -52,6 +52,8 @@ namespace Revalee.Client
 		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan"/> that represents a time interval to delay the callback.</param>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A <see cref="T:System.Guid"/> that serves as an identifier for the successfully scheduled callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The callback request failed during communication with the Revalee service.</exception>
 		public static Guid ScheduleCallback(TimeSpan callbackDelay, Uri callbackUri)
 		{
 			return ScheduleCallback(new ServiceBaseUri(), DateTimeOffset.Now.Add(callbackDelay), callbackUri);
@@ -64,6 +66,10 @@ namespace Revalee.Client
 		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan"/> that represents a time interval to delay the callback.</param>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A <see cref="T:System.Guid"/> that serves as an identifier for the successfully scheduled callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceHost" /> is null.</exception>
+		/// <exception cref="T:System.UriFormatException"><paramref name="serviceHost" /> is not valid as a service base Uri for the Revalee service.</exception>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The callback request failed during communication with the Revalee service.</exception>
 		public static Guid ScheduleCallback(string serviceHost, TimeSpan callbackDelay, Uri callbackUri)
 		{
 			return ScheduleCallback(new ServiceBaseUri(serviceHost), DateTimeOffset.Now.Add(callbackDelay), callbackUri);
@@ -76,6 +82,9 @@ namespace Revalee.Client
 		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan"/> that represents a time interval to delay the callback.</param>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A <see cref="T:System.Guid"/> that serves as an identifier for the successfully scheduled callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceBaseUri" /> is null.</exception>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The callback request failed during communication with the Revalee service.</exception>
 		public static Guid ScheduleCallback(Uri serviceBaseUri, TimeSpan callbackDelay, Uri callbackUri)
 		{
 			return ScheduleCallback(serviceBaseUri, DateTimeOffset.Now.Add(callbackDelay), callbackUri);
@@ -87,6 +96,8 @@ namespace Revalee.Client
 		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset"/> that represents the scheduled moment of the callback.</param>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A <see cref="T:System.Guid"/> that serves as an identifier for the successfully scheduled callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The callback request failed during communication with the Revalee service.</exception>
 		public static Guid ScheduleCallback(DateTimeOffset callbackTime, Uri callbackUri)
 		{
 			return ScheduleCallback(new ServiceBaseUri(), callbackTime, callbackUri);
@@ -99,6 +110,10 @@ namespace Revalee.Client
 		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset"/> that represents the scheduled moment of the callback.</param>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A <see cref="T:System.Guid"/> that serves as an identifier for the successfully scheduled callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceHost" /> is null.</exception>
+		/// <exception cref="T:System.UriFormatException"><paramref name="serviceHost" /> is not valid as a service base Uri for the Revalee service.</exception>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The callback request failed during communication with the Revalee service.</exception>
 		public static Guid ScheduleCallback(string serviceHost, DateTimeOffset callbackTime, Uri callbackUri)
 		{
 			return ScheduleCallback(new ServiceBaseUri(serviceHost), callbackTime, callbackUri);
@@ -111,6 +126,9 @@ namespace Revalee.Client
 		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset"/> that represents the scheduled moment of the callback.</param>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A <see cref="T:System.Guid"/> that serves as an identifier for the successfully scheduled callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceBaseUri" /> is null.</exception>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The callback request failed during communication with the Revalee service.</exception>
 		public static Guid ScheduleCallback(Uri serviceBaseUri, DateTimeOffset callbackTime, Uri callbackUri)
 		{
 			if (serviceBaseUri == null)
@@ -155,6 +173,8 @@ namespace Revalee.Client
 		/// <param name="callbackId">A <see cref="T:System.Guid"/> that was previously returned from a scheduled callback.</param>
 		/// <param name="callbackUri">An absolute URL that matches the specified URL when originally scheduled.</param>
 		/// <returns>true if the cancellation request was accepted, false if not</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The cancellation request failed during communication with the Revalee service.</exception>
 		public static bool CancelCallback(Guid callbackId, Uri callbackUri)
 		{
 			return CancelCallback(new ServiceBaseUri(), callbackId, callbackUri);
@@ -167,6 +187,10 @@ namespace Revalee.Client
 		/// <param name="callbackId">A <see cref="T:System.Guid"/> that was previously returned from a scheduled callback.</param>
 		/// <param name="callbackUri">An absolute URL that matches the specified URL when originally scheduled.</param>
 		/// <returns>true if the cancellation request was accepted, false if not</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceHost" /> is null.</exception>
+		/// <exception cref="T:System.UriFormatException"><paramref name="serviceHost" /> is not valid as a service base Uri for the Revalee service.</exception>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The cancellation request failed during communication with the Revalee service.</exception>
 		public static bool CancelCallback(string serviceHost, Guid callbackId, Uri callbackUri)
 		{
 			return CancelCallback(new ServiceBaseUri(serviceHost), callbackId, callbackUri);
@@ -179,6 +203,9 @@ namespace Revalee.Client
 		/// <param name="callbackId">A <see cref="T:System.Guid"/> that was previously returned from a scheduled callback.</param>
 		/// <param name="callbackUri">An absolute URL that matches the specified URL when originally scheduled.</param>
 		/// <returns>true if the cancellation request was accepted, false if not</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceBaseUri" /> is null.</exception>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The cancellation request failed during communication with the Revalee service.</exception>
 		public static bool CancelCallback(Uri serviceBaseUri, Guid callbackId, Uri callbackUri)
 		{
 			if (serviceBaseUri == null)
@@ -208,6 +235,7 @@ namespace Revalee.Client
 		/// </summary>
 		/// <param name="request">A System.Web.HttpRequestBase object representing the incoming callback.</param>
 		/// <returns>true if the callback was originally requested by this same web application; false if not able to make that determination.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="request" /> is null.</exception>
 		public static bool ValidateCallback(HttpRequestBase request)
 		{
 			if (request == null)

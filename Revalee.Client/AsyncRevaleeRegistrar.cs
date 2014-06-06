@@ -43,6 +43,8 @@ namespace Revalee.Client
 		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan"/> that represents a time interval to delay the callback.</param>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A System.Threading.Tasks.Task&lt;System.Guid&gt; and when complete, the result will be an identifier for the successfully scheduled callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The callback request failed during communication with the Revalee service.</exception>
 		public static Task<Guid> ScheduleCallbackAsync(TimeSpan callbackDelay, Uri callbackUri)
 		{
 			return ScheduleCallbackAsync(new ServiceBaseUri(), DateTimeOffset.Now.Add(callbackDelay), callbackUri);
@@ -55,6 +57,10 @@ namespace Revalee.Client
 		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan"/> that represents a time interval to delay the callback.</param>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A System.Threading.Tasks.Task&lt;System.Guid&gt; and when complete, the result will be an identifier for the successfully scheduled callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceHost" /> is null.</exception>
+		/// <exception cref="T:System.UriFormatException"><paramref name="serviceHost" /> is not valid as a service base Uri for the Revalee service.</exception>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The callback request failed during communication with the Revalee service.</exception>
 		public static Task<Guid> ScheduleCallbackAsync(string serviceHost, TimeSpan callbackDelay, Uri callbackUri)
 		{
 			return ScheduleCallbackAsync(new ServiceBaseUri(serviceHost), DateTimeOffset.Now.Add(callbackDelay), callbackUri);
@@ -67,6 +73,9 @@ namespace Revalee.Client
 		/// <param name="callbackDelay">A <see cref="T:System.TimeSpan"/> that represents a time interval to delay the callback.</param>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A System.Threading.Tasks.Task&lt;System.Guid&gt; and when complete, the result will be an identifier for the successfully scheduled callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceBaseUri" /> is null.</exception>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The callback request failed during communication with the Revalee service.</exception>
 		public static Task<Guid> ScheduleCallbackAsync(Uri serviceBaseUri, TimeSpan callbackDelay, Uri callbackUri)
 		{
 			return ScheduleCallbackAsync(serviceBaseUri, DateTimeOffset.Now.Add(callbackDelay), callbackUri);
@@ -78,6 +87,8 @@ namespace Revalee.Client
 		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset"/> that represents the scheduled moment of the callback.</param>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A System.Threading.Tasks.Task&lt;System.Guid&gt; and when complete, the result will be an identifier for the successfully scheduled callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The callback request failed during communication with the Revalee service.</exception>
 		public static Task<Guid> ScheduleCallbackAsync(DateTimeOffset callbackTime, Uri callbackUri)
 		{
 			return ScheduleCallbackAsync(new ServiceBaseUri(), callbackTime, callbackUri);
@@ -90,6 +101,10 @@ namespace Revalee.Client
 		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset"/> that represents the scheduled moment of the callback.</param>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A System.Threading.Tasks.Task&lt;System.Guid&gt; and when complete, the result will be an identifier for the successfully scheduled callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceHost" /> is null.</exception>
+		/// <exception cref="T:System.UriFormatException"><paramref name="serviceHost" /> is not valid as a service base Uri for the Revalee service.</exception>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The callback request failed during communication with the Revalee service.</exception>
 		public static Task<Guid> ScheduleCallbackAsync(string serviceHost, DateTimeOffset callbackTime, Uri callbackUri)
 		{
 			return ScheduleCallbackAsync(new ServiceBaseUri(serviceHost), callbackTime, callbackUri);
@@ -102,6 +117,9 @@ namespace Revalee.Client
 		/// <param name="callbackTime">A <see cref="T:System.DateTimeOffset"/> that represents the scheduled moment of the callback.</param>
 		/// <param name="callbackUri">An absolute <see cref="T:System.Uri"/> that will be requested on the callback.</param>
 		/// <returns>A System.Threading.Tasks.Task&lt;System.Guid&gt; and when complete, the result will be an identifier for the successfully scheduled callback.</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceBaseUri" /> is null.</exception>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The callback request failed during communication with the Revalee service.</exception>
 		public static Task<Guid> ScheduleCallbackAsync(Uri serviceBaseUri, DateTimeOffset callbackTime, Uri callbackUri)
 		{
 			if (serviceBaseUri == null)
@@ -185,6 +203,8 @@ namespace Revalee.Client
 		/// <param name="callbackId">A <see cref="T:System.Guid"/> that was previously returned from a scheduled callback.</param>
 		/// <param name="callbackUri">An absolute URL that matches the specified URL when originally scheduled.</param>
 		/// <returns>A System.Threading.Tasks.Task&lt;bool&gt; and when complete, the result will be true if the cancellation request was accepted, false if not</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The cancellation request failed during communication with the Revalee service.</exception>
 		public static Task<bool> CancelCallbackAsync(Guid callbackId, Uri callbackUri)
 		{
 			return CancelCallbackAsync(new ServiceBaseUri(), callbackId, callbackUri);
@@ -197,6 +217,10 @@ namespace Revalee.Client
 		/// <param name="callbackId">A <see cref="T:System.Guid"/> that was previously returned from a scheduled callback.</param>
 		/// <param name="callbackUri">An absolute URL that matches the specified URL when originally scheduled.</param>
 		/// <returns>A System.Threading.Tasks.Task&lt;bool&gt; and when complete, the result will be true if the cancellation request was accepted, false if not</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceHost" /> is null.</exception>
+		/// <exception cref="T:System.UriFormatException"><paramref name="serviceHost" /> is not valid as a service base Uri for the Revalee service.</exception>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The cancellation request failed during communication with the Revalee service.</exception>
 		public static Task<bool> CancelCallbackAsync(string serviceHost, Guid callbackId, Uri callbackUri)
 		{
 			return CancelCallbackAsync(new ServiceBaseUri(serviceHost), callbackId, callbackUri);
@@ -209,6 +233,9 @@ namespace Revalee.Client
 		/// <param name="callbackId">A <see cref="T:System.Guid"/> that was previously returned from a scheduled callback.</param>
 		/// <param name="callbackUri">An absolute URL that matches the specified URL when originally scheduled.</param>
 		/// <returns>A System.Threading.Tasks.Task&lt;bool&gt; and when complete, the result will be true if the cancellation request was accepted, false if not</returns>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="serviceBaseUri" /> is null.</exception>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="callbackUri" /> is null.</exception>
+		/// <exception cref="T:Revalee.Client.RevaleeRequestException">The cancellation request failed during communication with the Revalee service.</exception>
 		public static Task<bool> CancelCallbackAsync(Uri serviceBaseUri, Guid callbackId, Uri callbackUri)
 		{
 			if (serviceBaseUri == null)

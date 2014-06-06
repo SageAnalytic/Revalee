@@ -157,7 +157,7 @@ namespace Revalee.Client.RecurringTasks
 
 			if (url.IsAbsoluteUri && url.Scheme != Uri.UriSchemeHttp && url.Scheme != Uri.UriSchemeHttps)
 			{
-				throw new ArgumentException("Supported URL scheme.");
+				throw new ArgumentException("Unsupported URL scheme.");
 			}
 
 			this.AddTask(_ClockSource, PeriodicityType.Daily, hour, minute, url);
@@ -177,7 +177,7 @@ namespace Revalee.Client.RecurringTasks
 
 			if (url.IsAbsoluteUri && url.Scheme != Uri.UriSchemeHttp && url.Scheme != Uri.UriSchemeHttps)
 			{
-				throw new ArgumentException("Supported URL scheme.");
+				throw new ArgumentException("Unsupported URL scheme.");
 			}
 
 			this.AddTask(_ClockSource, PeriodicityType.Hourly, 0, minute, url);
@@ -229,7 +229,7 @@ namespace Revalee.Client.RecurringTasks
 				if (absolutePath.Length > parameterStartingIndex)
 				{
 					// AbsolutePath format:
-					// task       -> ~/__RevaleeRecurring.axd/{identifier}/{occurence}
+					// task       -> ~/__RevaleeRecurring.axd/{identifier}/{occurrence}
 					// heartbeat  -> ~/__RevaleeRecurring.axd/{heartbeatId}
 
 					int taskParameterDelimiterIndex = absolutePath.IndexOf('/', parameterStartingIndex);

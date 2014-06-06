@@ -62,6 +62,7 @@ namespace Revalee.Client.Mvc
 		/// Called before the action executes to supply cached state information if present.
 		/// </summary>
 		/// <param name="filterContext">The filter context, which encapsulates information for using <see cref="T:Revalee.Client.Mvc.CallbackActionAttribute" />.</param>
+		/// <exception cref="T:System.ArgumentNullException">The <paramref name="filterContext" /> parameter is null.</exception>
 		public override void OnActionExecuting(ActionExecutingContext filterContext)
 		{
 			base.OnActionExecuting(filterContext);

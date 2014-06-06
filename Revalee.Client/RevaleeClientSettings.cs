@@ -84,6 +84,7 @@ namespace Revalee.Client
 
 		/// <summary>Gets or sets the timeout of callback requests in milliseconds, a value of null indicates a default timeout period.</summary>
 		/// <returns>The timeout of callback requests in milliseconds, a value of null indicates a default timeout period.</returns>
+		/// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="value" /> cannot be negative.</exception>
 		public static int? RequestTimeout
 		{
 			get

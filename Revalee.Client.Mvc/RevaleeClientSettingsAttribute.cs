@@ -67,6 +67,7 @@ namespace Revalee.Client.Mvc
 
 		/// <summary>Gets or sets the timeout of callback requests in milliseconds, a value of 0 indicates a default timeout period, a value of -1 indicates an infinite timeout period.</summary>
 		/// <returns>The timeout of callback requests in milliseconds, a value of 0 indicates a default timeout period, a value of -1 indicates an infinite timeout period.</returns>
+		/// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="value" /> cannot be a negative value unless -1 for an infinite period.</exception>
 		public int RequestTimeout
 		{
 			get
@@ -116,6 +117,7 @@ namespace Revalee.Client.Mvc
 
 		/// <summary>Called by the ASP.NET MVC framework before the action method executes.</summary>
 		/// <param name="filterContext">The filter context.</param>
+		/// <exception cref="T:System.ArgumentNullException">The <paramref name="filterContext" /> parameter is null.</exception>
 		public void OnActionExecuting(ActionExecutingContext filterContext)
 		{
 			if (filterContext == null)

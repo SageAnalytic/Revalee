@@ -62,6 +62,10 @@ namespace Revalee.Client.RecurringTasks
 		/// <param name="hour">A <see cref="T:System.Int32" /> value for the scheduled hour (0-23).</param>
 		/// <param name="minute">A <see cref="T:System.Int32" /> value for the scheduled minute (0-59).</param>
 		/// <param name="url">A <see cref="T:System.Uri" /> value defining the target of the callback.</param>
+		/// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="hour" /> is not between 0 and 23.</exception>
+		/// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="minute" /> is not between 0 and 59.</exception>
+		/// <exception cref="T:System.ArgumentException"><paramref name="url" /> is not an absolute URL.</exception>
+		/// <exception cref="T:System.ArgumentException"><paramref name="url" /> contains an unsupported URL scheme.</exception>
 		void AddDailyTask(int hour, int minute, Uri url);
 
 		/// <summary>
@@ -69,12 +73,16 @@ namespace Revalee.Client.RecurringTasks
 		/// </summary>
 		/// <param name="minute">A <see cref="T:System.Int32" /> value for the scheduled minute (0-59).</param>
 		/// <param name="url">A <see cref="T:System.Uri" /> value defining the target of the callback.</param>
+		/// <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="minute" /> is not between 0 and 59.</exception>
+		/// <exception cref="T:System.ArgumentException"><paramref name="url" /> is not an absolute URL.</exception>
+		/// <exception cref="T:System.ArgumentException"><paramref name="url" /> contains an unsupported URL scheme.</exception>
 		void AddHourlyTask(int minute, Uri url);
 
 		/// <summary>
 		/// Removes a recurring callback task.
 		/// </summary>
 		/// <param name="identifier">The <see cref="Revalee.Client.RecurringTasks.IRecurringTask.Identifier" /> of the task to be removed.</param>
+		/// <exception cref="T:System.ArgumentNullException"><paramref name="identifier" /> is null.</exception>
 		void RemoveTask(string identifier);
 
 		/// <summary>

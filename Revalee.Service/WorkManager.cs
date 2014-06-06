@@ -117,7 +117,7 @@ namespace Revalee.Service
 					}
 					catch (AggregateException aex)
 					{
-						// Nonretryable error
+						// Non-retryable error
 						CompleteFailedTask(task, aex);
 					}
 				});
@@ -128,7 +128,7 @@ namespace Revalee.Service
 			}
 			catch (SecurityException sex)
 			{
-				// Nonretryable error
+				// Non-retryable error
 				CompleteFailedTask(task, sex);
 			}
 		}

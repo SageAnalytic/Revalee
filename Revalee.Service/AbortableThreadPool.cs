@@ -98,7 +98,7 @@ namespace Revalee.Service
 
 			lock (_WorkItems)
 			{
-				// Check if work item has been cancelled
+				// Check if work item has been canceled
 				if (workItem.Callback == null)
 				{
 					return;
