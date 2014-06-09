@@ -17,7 +17,7 @@ namespace Revalee.Service
 
 		private const int _MinimumCapacity = 17;
 
-		private readonly static int[] _Primes = new int[] {
+		private readonly static int[] _ChosenPrimes = new int[] {
 			3, 7, 11, 0x11, 0x17, 0x1d, 0x25, 0x2f, 0x3b, 0x47, 0x59, 0x6b, 0x83, 0xa3,
 			0xc5, 0xef, 0x125, 0x161, 0x1af, 0x209, 0x277, 0x2f9, 0x397, 0x44f, 0x52f, 0x63d, 0x78b,
 			0x91d, 0xaf1, 0xd2b, 0xfd1, 0x12fd, 0x16cf, 0x1b65, 0x20e3, 0x2777, 0x2f6f, 0x38ff, 0x446f,
@@ -1253,18 +1253,14 @@ namespace Revalee.Service
 				throw new OverflowException("Capacity overflow within hashtable.");
 			}
 
-			int precalcIndex = 0;
-
-			while ((precalcIndex < _Primes.Length))
+			for (int precalcIndex = 0; precalcIndex < _ChosenPrimes.Length; precalcIndex++)
 			{
-				int precalcValue = _Primes[precalcIndex];
+				int precalcValue = _ChosenPrimes[precalcIndex];
 
 				if (precalcValue >= minimumNumber)
 				{
 					return precalcValue;
 				}
-
-				precalcIndex += 1;
 			}
 
 			int candidate = (minimumNumber | 1);
@@ -1289,7 +1285,7 @@ namespace Revalee.Service
 				return (candidate == 2);
 			}
 
-			int largestFactor = Convert.ToInt32(Math.Sqrt(Convert.ToDouble(candidate)));
+			int largestFactor = (int)Math.Floor(Math.Sqrt(candidate));
 			int divisor = 3;
 
 			while (divisor <= largestFactor)
