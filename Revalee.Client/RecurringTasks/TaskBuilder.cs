@@ -96,10 +96,10 @@ namespace Revalee.Client.RecurringTasks
 			string compoundKey = string.Format(CultureInfo.InvariantCulture, keyFormat, (int)periodicity, hourOffset, minuteOffset, url);
 			byte[] textBytes = Encoding.UTF8.GetBytes(compoundKey);
 			byte[] hashBytes = _HashAlgorithm.ComputeHash(textBytes);
-			return ByteArrayToHexidecimalString(hashBytes);
+			return ConvertByteArrayToHexadecimalString(hashBytes);
 		}
 
-		private static string ByteArrayToHexidecimalString(byte[] bytes)
+		private static string ConvertByteArrayToHexadecimalString(byte[] bytes)
 		{
 			char[] charArray = new char[bytes.Length * 2];
 			int byteValue;

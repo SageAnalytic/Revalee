@@ -66,6 +66,8 @@ var callbackUri = new Uri("http://localhost/Recurring/Nightly");
 manifest.AddDailyTask(3, 30, callbackUri);
 ```
 
+[Full API Reference](http://revalee.sageanalytic.com/Help/index.html)
+
 Supported Platforms
 -------------------
 *  Windows XP or later

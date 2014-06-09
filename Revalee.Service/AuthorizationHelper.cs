@@ -42,22 +42,8 @@ namespace Revalee.Service
 
 		private static string CipherProcessorVersion2(IDictionary<string, string> incomingCipherValues, Guid callbackId)
 		{
-			// Validate parameters
+			// Create nonce byte array
 			string nonceInHex = incomingCipherValues["n"];
-
-			if (string.IsNullOrEmpty(nonceInHex) && (nonceInHex.Length % 2 == 0))
-			{
-				return null;
-			}
-
-			string clientCryptogramInHex = incomingCipherValues["c"];
-
-			if (string.IsNullOrEmpty(clientCryptogramInHex) && (clientCryptogramInHex.Length % 2 == 0))
-			{
-				return null;
-			}
-
-			// Create byte arrays
 			byte[] nonce = ConvertHexToByteArray(nonceInHex);
 
 			if (nonce == null)
@@ -65,6 +51,8 @@ namespace Revalee.Service
 				return null;
 			}
 
+			// Create client cryptogram byte array
+			string clientCryptogramInHex = incomingCipherValues["c"];
 			byte[] clientCryptogram = ConvertHexToByteArray(clientCryptogramInHex);
 
 			if (clientCryptogram == null)
@@ -72,6 +60,7 @@ namespace Revalee.Service
 				return null;
 			}
 
+			// Construct server cryptogram
 			byte[] responseId = GetResponseId(callbackId);
 			byte[] serverCryptogram = BuildServerCryptogram(nonce, clientCryptogram, responseId);
 
@@ -115,6 +104,11 @@ namespace Revalee.Service
 
 		private static byte[] ConvertHexToByteArray(string value)
 		{
+			if (value == null || value.Length == 0 || (value.Length & 1) != 0)
+			{
+				return null;
+			}
+
 			byte[] bytes = new byte[value.Length >> 1];
 
 			for (int i = 0; i < bytes.Length; i++)
@@ -135,7 +129,7 @@ namespace Revalee.Service
 					return null;
 				}
 
-				bytes[i] = (byte)(highNibble << 4 | lowNibble);
+				bytes[i] = (byte)((highNibble << 4) | lowNibble);
 			}
 
 			return bytes;

@@ -100,9 +100,9 @@ namespace Revalee.Client.Validation
 				return false;
 			}
 
-			byte[] nonce = ConvertHexToByteArray(cipherValues["n"]);
+			byte[] nonce = ConvertHexadecimalToByteArray(cipherValues["n"]);
 
-			if (nonce == null || nonce.Length == 0)
+			if (nonce == null)
 			{
 				decodedCipher = null;
 				return false;
@@ -114,12 +114,12 @@ namespace Revalee.Client.Validation
 			if (cipherValues.ContainsKey("s"))
 			{
 				source = CipherSource.Server;
-				cryptogram = ConvertHexToByteArray(cipherValues["s"]);
+				cryptogram = ConvertHexadecimalToByteArray(cipherValues["s"]);
 			}
 			else if (cipherValues.ContainsKey("c"))
 			{
 				source = CipherSource.Client;
-				cryptogram = ConvertHexToByteArray(cipherValues["c"]);
+				cryptogram = ConvertHexadecimalToByteArray(cipherValues["c"]);
 			}
 			else
 			{
@@ -127,7 +127,7 @@ namespace Revalee.Client.Validation
 				return false;
 			}
 
-			if (cryptogram == null || cryptogram.Length == 0)
+			if (cryptogram == null)
 			{
 				decodedCipher = null;
 				return false;
@@ -139,19 +139,18 @@ namespace Revalee.Client.Validation
 
 		public override string ToString()
 		{
-			var cipher = new StringBuilder();
-			cipher.Append("v=");
-			cipher.Append(this.Version.ToString(CultureInfo.InvariantCulture));
+			var cipher = new StringBuilder(128);
+			cipher.Append("v=").Append(this.Version);
 			cipher.Append(",n=");
-			cipher.Append(ConvertByteArrayToHex(this.Nonce));
+			AppendHexadecimal(cipher, this.Nonce);
 			cipher.Append(this.Source == CipherSource.Server ? ",s=" : ",c=");
-			cipher.Append(ConvertByteArrayToHex(this.Cryptogram));
+			AppendHexadecimal(cipher, this.Cryptogram);
 			return cipher.ToString();
 		}
 
-		private static byte[] ConvertHexToByteArray(string value)
+		private static byte[] ConvertHexadecimalToByteArray(string value)
 		{
-			if (string.IsNullOrEmpty(value) || value.Length % 2 != 0)
+			if (value == null || value.Length == 0 || (value.Length & 1) != 0)
 			{
 				return null;
 			}
@@ -161,36 +160,56 @@ namespace Revalee.Client.Validation
 
 			for (int byteIndex = 0; byteIndex < byteLength; byteIndex++)
 			{
-				byte leftNibble;
-
-				if (!byte.TryParse(value[byteIndex << 1].ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out leftNibble))
+				unchecked
 				{
-					return null;
+					int digitIndex = byteIndex << 1;
+					uint hexDigit = value[digitIndex];
+					uint highNibble = hexDigit - '0';
+
+					if (highNibble > 9)
+					{
+						highNibble = (hexDigit & ~0x20u) - 'A';
+
+						if (highNibble > 5)
+						{
+							return null;
+						}
+
+						highNibble += 10;
+					}
+
+					hexDigit = value[++digitIndex];
+					uint lowNibble = hexDigit - '0';
+
+					if (lowNibble > 9)
+					{
+						lowNibble = (hexDigit & ~0x20u) - 'A';
+
+						if (lowNibble > 5)
+						{
+							return null;
+						}
+
+						lowNibble += 10;
+					}
+
+					byteArray[byteIndex] = (byte)((highNibble << 4) | lowNibble);
 				}
-
-				byte rightNibble;
-
-				if (!byte.TryParse(value[(byteIndex << 1) + 1].ToString(), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out rightNibble))
-				{
-					return null;
-				}
-
-				byteArray[byteIndex] = (byte)((((int)leftNibble) << 4) | (int)rightNibble);
 			}
 
 			return byteArray;
 		}
 
-		private static string ConvertByteArrayToHex(byte[] value)
+		private static void AppendHexadecimal(StringBuilder output, byte[] value)
 		{
-			var output = new StringBuilder(value.Length * 2);
+			const string hexDigits = "0123456789ABCDEF";
 
 			for (int i = 0; i < value.Length; i++)
 			{
-				output.AppendFormat(CultureInfo.InvariantCulture, "{0:X2}", value[i]);
+				int byteValue = value[i];
+				output.Append(hexDigits[byteValue >> 4]);
+				output.Append(hexDigits[byteValue & 0xF]);
 			}
-
-			return output.ToString();
 		}
 
 		private static IDictionary<string, string> ParseMultiValueHeader(string headerValue)
