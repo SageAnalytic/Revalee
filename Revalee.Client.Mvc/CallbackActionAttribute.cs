@@ -27,7 +27,6 @@ SOFTWARE.
 #endregion License
 
 using System;
-using System.Linq;
 using System.Web.Mvc;
 
 namespace Revalee.Client.Mvc
@@ -91,11 +90,14 @@ namespace Revalee.Client.Mvc
 
 						if (cachedState != null)
 						{
-							ParameterDescriptor stateParameter = filterContext.ActionDescriptor.GetParameters().Where(p => string.Equals(p.ParameterName, stateActionParameterName, StringComparison.OrdinalIgnoreCase)).SingleOrDefault();
-
-							if (stateParameter != null && stateParameter.ParameterType.IsAssignableFrom(cachedState.GetType()))
+							foreach (ParameterDescriptor stateParameter in filterContext.ActionDescriptor.GetParameters())
 							{
-								filterContext.ActionParameters[stateActionParameterName] = cachedState;
+								if (string.Equals(stateParameter.ParameterName, stateActionParameterName, StringComparison.OrdinalIgnoreCase)
+									&& stateParameter.ParameterType.IsAssignableFrom(cachedState.GetType()))
+								{
+									filterContext.ActionParameters[stateActionParameterName] = cachedState;
+									return;
+								}
 							}
 						}
 					}
