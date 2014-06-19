@@ -75,13 +75,15 @@ namespace Revalee.Client.RecurringTasks
 		public bool Add(ConfiguredTask taskConfig)
 		{
 			// A proper immutable dictionary class would simplify this routine
+			RandomWaitScheduler retryScheduler = null;
+
 			do
 			{
 				Dictionary<string, ConfiguredTask> original = _Tasks;
 
 				if (!original.ContainsKey(taskConfig.Identifier))
 				{
-					Dictionary<string, ConfiguredTask> clone = new Dictionary<string, ConfiguredTask>(original);
+					var clone = new Dictionary<string, ConfiguredTask>(original);
 
 					if (!clone.ContainsKey(taskConfig.Identifier))
 					{
@@ -89,8 +91,12 @@ namespace Revalee.Client.RecurringTasks
 
 						if (!object.ReferenceEquals(Interlocked.CompareExchange(ref _Tasks, clone, original), original))
 						{
-							var random = new Random();
-							Thread.Sleep(random.Next(50));
+							if (retryScheduler == null)
+							{
+								retryScheduler = new RandomWaitScheduler();
+							}
+
+							retryScheduler.Wait();
 							continue;
 						}
 
@@ -105,13 +111,15 @@ namespace Revalee.Client.RecurringTasks
 		public bool Remove(string identifier)
 		{
 			// A proper immutable dictionary class would simplify this routine
+			RandomWaitScheduler retryScheduler = null;
+
 			do
 			{
 				Dictionary<string, ConfiguredTask> original = _Tasks;
 
 				if (original.ContainsKey(identifier))
 				{
-					Dictionary<string, ConfiguredTask> clone = new Dictionary<string, ConfiguredTask>(original);
+					var clone = new Dictionary<string, ConfiguredTask>(original);
 
 					if (clone.ContainsKey(identifier))
 					{
@@ -119,8 +127,12 @@ namespace Revalee.Client.RecurringTasks
 
 						if (!object.ReferenceEquals(Interlocked.CompareExchange(ref _Tasks, clone, original), original))
 						{
-							var random = new Random();
-							Thread.Sleep(random.Next(50));
+							if (retryScheduler == null)
+							{
+								retryScheduler = new RandomWaitScheduler();
+							}
+
+							retryScheduler.Wait();
 							continue;
 						}
 
@@ -135,6 +147,16 @@ namespace Revalee.Client.RecurringTasks
 		public bool Remove(ConfiguredTask taskConfig)
 		{
 			return Remove(taskConfig.Identifier);
+		}
+
+		private class RandomWaitScheduler
+		{
+			private readonly Random _RandomNumberGenerator = new Random();
+
+			public void Wait()
+			{
+				Thread.Sleep(_RandomNumberGenerator.Next(15));
+			}
 		}
 	}
 }
