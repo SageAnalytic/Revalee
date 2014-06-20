@@ -23,16 +23,21 @@ Here are some common ways to utilize the power of scheduled callbacks:
 Getting Started
 ---------------
 
-The Revalee service can be downloaded [here](http://revalee.sageanalytic.com#Download) or built from the source code.
+Revalee consists of a Windows service that stores and initiates the callbacks, plus a client API to schedule those callbacks. You will need to install both service and client to get started.
 
-To install the service, extract the files into a folder (e.g., C:\Program Files\Revalee\) and run the following command with elevated permissions:
+**Windows Service**
+
+The Revalee service is available on [Chocolatey](http://chocolatey.org). To perform a quick install, use:
 
 ```
-Revalee.Service.exe -install
+cinst Revalee.Service
 ```
 
+The Revalee service can also be downloaded [here](http://revalee.sageanalytic.com#Download) or built from the source code.
 
-The Revalee client library is available on NuGet. To include in a .NET 4.0+ project, use:
+**Client Library**
+
+The Revalee client library is available on [NuGet](http://www.nuget.org). To include in a .NET 4.0+ project, use:
 
 ```
 Install-Package Revalee.Client
@@ -44,6 +49,8 @@ Alternatively for ASP.NET MVC projects targeting .NET 4.5+, a specialized Revale
 ```
 Install-Package Revalee.Client.Mvc
 ```
+
+Callbacks can also be scheduled from any platform without the use of a client library by using the REST API.
 
 Usage Examples
 --------------
