@@ -462,8 +462,6 @@ namespace Revalee.Service.EsePersistence
 				throw new InvalidOperationException("Storage provider has not been opened.");
 			}
 
-			var taskList = new List<RevaleeTask>();
-
 			EseConnection connection = this._ConnectionPool.OpenConnection();
 
 			try
@@ -508,7 +506,7 @@ namespace Revalee.Service.EsePersistence
 									attemptsRemainingColumn.Value,
 									string.IsNullOrEmpty(authorizationCipher) ? null : authorizationCipher);
 
-								taskList.Add(revivedTask);
+								yield return revivedTask;
 							}
 						} while (Api.TryMoveNext(jetSession, jetTable));
 					}
@@ -519,7 +517,7 @@ namespace Revalee.Service.EsePersistence
 				_ConnectionPool.CloseConnection(connection);
 			}
 
-			return taskList;
+			yield break;
 		}
 
 		public IEnumerable<RevaleeTask> ListTasksDueBetween(DateTime startTime, DateTime endTime)
@@ -535,8 +533,6 @@ namespace Revalee.Service.EsePersistence
 			// Inclusive Upper Limit does not work properly for the CLR DateTime type.
 			// Add the smallest amount of time that the Esent engine will detect to include the ending range inclusively.
 			rangeEndTime = rangeEndTime.AddMilliseconds(1.0);
-
-			var taskList = new List<RevaleeTask>();
 
 			EseConnection connection = this._ConnectionPool.OpenConnection();
 
@@ -587,7 +583,7 @@ namespace Revalee.Service.EsePersistence
 										attemptsRemainingColumn.Value,
 										string.IsNullOrEmpty(authorizationCipher) ? null : authorizationCipher);
 
-									taskList.Add(revivedTask);
+									yield return revivedTask;
 								}
 							} while (Api.TryMoveNext(jetSession, jetTable));
 						}
@@ -599,7 +595,7 @@ namespace Revalee.Service.EsePersistence
 				_ConnectionPool.CloseConnection(connection);
 			}
 
-			return taskList;
+			yield break;
 		}
 
 		private void CreateTaskTable(EseConnection connection)
