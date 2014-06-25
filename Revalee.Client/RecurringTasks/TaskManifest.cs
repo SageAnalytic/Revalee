@@ -119,7 +119,7 @@ namespace Revalee.Client.RecurringTasks
 			}
 		}
 
-		internal bool TryGetTask(string identifier, out ConfiguredTask taskConfig)
+		protected internal bool TryGetTask(string identifier, out ConfiguredTask taskConfig)
 		{
 			if (string.IsNullOrEmpty(identifier))
 			{
@@ -130,7 +130,7 @@ namespace Revalee.Client.RecurringTasks
 			return _TaskCollection.TryGetTask(identifier, out taskConfig);
 		}
 
-		internal void Start()
+		protected internal void Start()
 		{
 			if (this.CallbackBaseUri != null)
 			{
@@ -278,7 +278,7 @@ namespace Revalee.Client.RecurringTasks
 			this.Schedule(this.PrepareNextCallback(taskConfig));
 		}
 
-		private void OnActivate()
+		protected void OnActivate()
 		{
 			if (_CurrentState.TransitionToActive())
 			{
@@ -292,11 +292,16 @@ namespace Revalee.Client.RecurringTasks
 					}
 				}
 
-				Activated.Invoke(this, new EventArgs());
+				EventHandler handler = Activated;
+
+				if (handler != null)
+				{
+					handler(this, new EventArgs());
+				}
 			}
 		}
 
-		private void OnDeactivate(RevaleeRequestException exception)
+		protected void OnDeactivate(RevaleeRequestException exception)
 		{
 			Trace.TraceError("A Revalee recurring task could not be scheduled.");
 
@@ -308,7 +313,12 @@ namespace Revalee.Client.RecurringTasks
 					this.Start();
 				});
 
-				Deactivated.Invoke(this, new DeactivationEventArgs(exception));
+				EventHandler<DeactivationEventArgs> handler = Deactivated;
+
+				if (handler != null)
+				{
+					handler(this, new DeactivationEventArgs(exception));
+				}
 			}
 		}
 
