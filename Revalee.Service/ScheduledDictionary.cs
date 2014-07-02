@@ -407,7 +407,10 @@ namespace Revalee.Service
 		{
 			get
 			{
-				return Thread.VolatileRead(ref _HashtableSize) - Thread.VolatileRead(ref _HashtableFreeBucketCount);
+				lock (_InternalLock)	// Read operation
+				{
+					return _HashtableSize - _HashtableFreeBucketCount;
+				}
 			}
 		}
 
