@@ -54,7 +54,7 @@ namespace Revalee.SampleSite.Controllers
 
 			Interlocked.Increment(ref _TotalRequestCount);
 
-			// Supercede all configured values for ServiceBaseUri because the sample web page specifies this value at runtime.
+			// Supersede all configured values for ServiceBaseUri because the sample web page specifies this value at runtime.
 			// Normally, this value would be configured in the web.config or by the RevaleeClientSettings attribute.
 			RevaleeClientSettings.ServiceBaseUri = serviceBaseUri;
 
