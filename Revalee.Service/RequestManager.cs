@@ -48,7 +48,10 @@ namespace Revalee.Service
 
 			try
 			{
-				_Listener.Start();
+				if (!_Listener.IsListening)
+				{
+					_Listener.Start();
+				}
 
 				if (!_ListeningThread.IsAlive)
 				{
@@ -104,6 +107,11 @@ namespace Revalee.Service
 				catch (ObjectDisposedException)
 				{
 					// This exception is thrown when the listener is disposed while listening
+					return;
+				}
+				catch (ApplicationException)
+				{
+					// This exception is thrown by the listener when already commanded to stop
 					return;
 				}
 			}
@@ -184,7 +192,18 @@ namespace Revalee.Service
 			{
 				if (_Listener != null)
 				{
-					((IDisposable)_Listener).Dispose();
+					try
+					{
+						if (_Listener.IsListening)
+						{
+							_Listener.Stop();
+						}
+
+						((IDisposable)_Listener).Dispose();
+					}
+					catch (ObjectDisposedException)
+					{
+					}
 				}
 
 				if (_ListeningThread != null && _ListeningThread.IsAlive)
