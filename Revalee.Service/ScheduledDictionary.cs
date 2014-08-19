@@ -148,8 +148,11 @@ namespace Revalee.Service
 				{
 					HeapEntry cancelledAppointment = _HeapEntries[heapIndex];
 					cancelledAppointment.IsDeleted = true;
-					DeleteFromHashtable(key);
-					_PendingDeleteCount++;
+
+					if (DeleteFromHashtable(key))
+					{
+						_PendingDeleteCount++;
+					}
 				}
 
 				heapIndex = InsertIntoHeap(key, value, due);
@@ -157,11 +160,26 @@ namespace Revalee.Service
 			}
 		}
 
-		public TValue AddOrReplace(TKey key, Func<TValue> addValueFactory, Func<TValue, DateTime, TValue> replaceValueFactory, Func<TValue, DateTime?, DateTime> dueFactory)
+		public TValue AddOrReplace(TKey key, Func<TKey, TValue> addValueFactory, Func<TKey, TValue, DateTime, TValue> replaceValueFactory, Func<TKey, TValue, DateTime?, DateTime> dueFactory)
 		{
 			if (key == null)
 			{
 				throw new ArgumentNullException("key");
+			}
+
+			if (addValueFactory == null)
+			{
+				throw new ArgumentNullException("addValueFactory");
+			}
+
+			if (replaceValueFactory == null)
+			{
+				throw new ArgumentNullException("replaceValueFactory");
+			}
+
+			if (dueFactory == null)
+			{
+				throw new ArgumentNullException("dueFactory");
 			}
 
 			TValue value;
@@ -176,10 +194,14 @@ namespace Revalee.Service
 				{
 					HeapEntry cancelledAppointment = _HeapEntries[heapIndex];
 					cancelledAppointment.IsDeleted = true;
-					DeleteFromHashtable(key);
-					_PendingDeleteCount++;
-					value = replaceValueFactory(cancelledAppointment.Value, cancelledAppointment.Due);
-					DateTime due = dueFactory(value, cancelledAppointment.Due);
+
+					if (DeleteFromHashtable(key))
+					{
+						_PendingDeleteCount++;
+					}
+
+					value = replaceValueFactory(key, cancelledAppointment.Value, cancelledAppointment.Due);
+					DateTime due = dueFactory(key, value, cancelledAppointment.Due);
 
 					if (due.Kind != DateTimeKind.Utc)
 					{
@@ -191,8 +213,8 @@ namespace Revalee.Service
 				}
 				else
 				{
-					value = addValueFactory();
-					DateTime due = dueFactory(value, null);
+					value = addValueFactory(key);
+					DateTime due = dueFactory(key, value, null);
 
 					if (due.Kind != DateTimeKind.Utc)
 					{
@@ -200,7 +222,7 @@ namespace Revalee.Service
 
 					}
 
-					heapIndex = InsertIntoHeap(key, value, dueFactory(value, null));
+					heapIndex = InsertIntoHeap(key, value, due);
 				}
 
 				TrackModification();
@@ -329,6 +351,7 @@ namespace Revalee.Service
 			}
 		}
 
+		[System.Diagnostics.DebuggerBrowsable(System.Diagnostics.DebuggerBrowsableState.Never)]
 		public bool ContainsOverdue
 		{
 			get
@@ -353,7 +376,7 @@ namespace Revalee.Service
 		public bool TryDequeue(out TValue result)
 		{
 			HeapEntry appointment;
-			if (TryRemoveHeapEntry(out appointment))
+			if (TryRemoveOverdueHeapEntry(out appointment))
 			{
 				result = appointment.Value;
 				return true;
@@ -537,33 +560,6 @@ namespace Revalee.Service
 			}
 		}
 
-		public TValue[] ToArray()
-		{
-			lock (_InternalLock)	// Read with possible write operation
-			{
-				if (IsDeletedEntryAtHead)
-				{
-					PruneDeletedEntries();
-				}
-
-				int currentHeapSize = HeapCount;
-
-				if (currentHeapSize == 0)
-				{
-					return new TValue[] { };
-				}
-
-				TValue[] tValueArray = new TValue[currentHeapSize];
-
-				for (int heapIndex = 0; heapIndex < currentHeapSize; heapIndex++)
-				{
-					tValueArray[heapIndex] = _HeapEntries[heapIndex].Value;
-				}
-
-				return tValueArray;
-			}
-		}
-
 		public void CopyTo(TValue[] array, int index)
 		{
 			((ICollection)this).CopyTo(array, index);
@@ -576,34 +572,68 @@ namespace Revalee.Service
 				throw new ArgumentNullException("array");
 			}
 
-			if (index < 0)
+			if (index < 0 || index >= array.Length)
 			{
 				throw new ArgumentOutOfRangeException("index");
 			}
 
 			lock (_InternalLock)	// Read with possible write operation
 			{
-				if (IsDeletedEntryAtHead)
-				{
-					PruneDeletedEntries();
-				}
+				int currentHashtableSize = HashtableCount;
 
-				int currentHeapSize = HeapCount;
-
-				if (currentHeapSize == 0)
-				{
-					return;
-				}
-
-				if (index + currentHeapSize > array.Length)
+				if (index + currentHashtableSize > array.Length)
 				{
 					throw new ArgumentException("Destination array is not large enough to fit the contents of the dictionary.");
 				}
 
+				if (currentHashtableSize == 0)
+				{
+					return;
+				}
+
+				int currentHeapSize = HeapCount;
+				int destinationIndex = index;
+
 				for (int heapIndex = 0; heapIndex < currentHeapSize; heapIndex++)
 				{
-					array.SetValue(_HeapEntries[heapIndex].Value, heapIndex + index);
+					HeapEntry appointment = _HeapEntries[heapIndex];
+
+					if (!appointment.IsDeleted)
+					{
+						array.SetValue(appointment.Value, destinationIndex);
+						destinationIndex++;
+					}
 				}
+			}
+		}
+
+		public TValue[] ToValueArray()
+		{
+			lock (_InternalLock)	// Read with possible write operation
+			{
+				int currentHashtableSize = HashtableCount;
+
+				if (currentHashtableSize == 0)
+				{
+					return new TValue[] { };
+				}
+
+				TValue[] array = new TValue[currentHashtableSize];
+				int currentHeapSize = HeapCount;
+				int destinationIndex = 0;
+
+				for (int heapIndex = 0; heapIndex < currentHeapSize; heapIndex++)
+				{
+					HeapEntry appointment = _HeapEntries[heapIndex];
+
+					if (!appointment.IsDeleted)
+					{
+						array.SetValue(appointment.Value, destinationIndex);
+						destinationIndex++;
+					}
+				}
+
+				return array;
 			}
 		}
 
@@ -646,7 +676,7 @@ namespace Revalee.Service
 			return TrickleUp(nextAvailableHeapIndex);
 		}
 
-		private bool TryRemoveHeapEntry(out HeapEntry result)
+		private bool TryRemoveOverdueHeapEntry(out HeapEntry result)
 		{
 			lock (_InternalLock)	// Write operation
 			{
@@ -667,10 +697,15 @@ namespace Revalee.Service
 
 				if (lastHeapIndex > 0)
 				{
-					DeleteFromHashtable(followingAppointment.Key);
 					_HeapEntries[lastHeapIndex] = null;
 					_HeapEntries[0] = followingAppointment;
-					InsertIntoHashtable(followingAppointment.Key, 0);
+
+					if (!followingAppointment.IsDeleted)
+					{
+						int hashtableIndex = FindHashtableIndex(followingAppointment.Key);
+						_HashtableEntries[hashtableIndex].HeapIndex = 0;
+					}
+
 					TrickleDown(lastHeapIndex);
 				}
 				else
@@ -683,6 +718,44 @@ namespace Revalee.Service
 				TrackModification();
 				return true;
 			}
+		}
+
+		private HeapEntry RemoveHeadHeapEntry()
+		{
+			PruneDeletedEntries();
+
+			if (HashtableCount == 0)
+			{
+				return null;
+			}
+
+			int lastHeapIndex = HeapCount - 1;
+			HeapEntry nextAppointment = _HeapEntries[0];
+			HeapEntry followingAppointment = _HeapEntries[lastHeapIndex];
+
+			DeleteFromHashtable(nextAppointment.Key);
+
+			if (lastHeapIndex > 0)
+			{
+				_HeapEntries[lastHeapIndex] = null;
+				_HeapEntries[0] = followingAppointment;
+
+				if (!followingAppointment.IsDeleted)
+				{
+					int hashtableIndex = FindHashtableIndex(followingAppointment.Key);
+					_HashtableEntries[hashtableIndex].HeapIndex = 0;
+				}
+
+				TrickleDown(lastHeapIndex);
+			}
+			else
+			{
+				_HeapEntries[lastHeapIndex] = null;
+			}
+
+			LimitHeapSparsity();
+
+			return nextAppointment;
 		}
 
 		private bool IsDeletedEntryAtHead
@@ -710,18 +783,14 @@ namespace Revalee.Service
 
 				if (lastHeapIndex > 0)
 				{
-					if (!followingAppointment.IsDeleted)
-					{
-						DeleteFromHashtable(followingAppointment.Key);
-					}
-
 					_HeapEntries[lastHeapIndex] = null;
 					_HeapEntries[0] = followingAppointment;
 					_PendingDeleteCount--;
 
 					if (!followingAppointment.IsDeleted)
 					{
-						InsertIntoHashtable(followingAppointment.Key, 0);
+						int hashtableIndex = FindHashtableIndex(followingAppointment.Key);
+						_HashtableEntries[hashtableIndex].HeapIndex = 0;
 					}
 
 					TrickleDown(lastHeapIndex);
@@ -783,12 +852,6 @@ namespace Revalee.Service
 						DeleteFromHashtable(nextAppointment.Key);
 					}
 
-					// The subsequent appointment is not deleted and needs to be removed & re-added to hashtable with a new heap index value
-					if (!followingAppointment.IsDeleted)
-					{
-						DeleteFromHashtable(followingAppointment.Key);
-					}
-
 					_HeapEntries[lastHeapIndex] = null;
 					_HeapEntries[0] = followingAppointment;
 
@@ -797,9 +860,11 @@ namespace Revalee.Service
 						_PendingDeleteCount--;
 					}
 
+					// The subsequent appointment is not deleted and needs to be removed & re-added to hashtable with a new heap index value
 					if (!followingAppointment.IsDeleted)
 					{
-						InsertIntoHashtable(followingAppointment.Key, 0);
+						int hashtableIndex = FindHashtableIndex(followingAppointment.Key);
+						_HashtableEntries[hashtableIndex].HeapIndex = 0;
 					}
 
 					TrickleDown(lastHeapIndex);
@@ -884,24 +949,19 @@ namespace Revalee.Service
 			HeapEntry originalXEntry = _HeapEntries[indexX];
 			HeapEntry originalYEntry = _HeapEntries[indexY];
 
-			if (originalXEntry.IsDeleted)
+			_HeapEntries[indexY] = originalXEntry;
+			_HeapEntries[indexX] = originalYEntry;
+
+			if (!originalXEntry.IsDeleted)
 			{
-				_HeapEntries[indexY] = originalXEntry;
-			}
-			else
-			{
-				_HeapEntries[indexY] = originalXEntry;
-				InsertIntoHashtable(originalXEntry.Key, indexY);
+				int hashtableIndex = FindHashtableIndex(originalXEntry.Key);
+				_HashtableEntries[hashtableIndex].HeapIndex = indexY;
 			}
 
-			if (originalYEntry.IsDeleted)
+			if (!originalYEntry.IsDeleted)
 			{
-				_HeapEntries[indexX] = originalYEntry;
-			}
-			else
-			{
-				_HeapEntries[indexX] = originalYEntry;
-				InsertIntoHashtable(originalYEntry.Key, indexX);
+				int hashtableIndex = FindHashtableIndex(originalYEntry.Key);
+				_HashtableEntries[hashtableIndex].HeapIndex = indexX;
 			}
 		}
 
@@ -928,12 +988,16 @@ namespace Revalee.Service
 		private void LimitHeapSparsity()
 		{
 			int currentHeapCapacity = _HeapEntries.Length;
-			int currentHeapSize = HeapCount;
 
-			if (currentHeapCapacity > 1024 && ((currentHeapSize + 1) * 10) < currentHeapCapacity)
+			if (currentHeapCapacity > 1024)
 			{
-				int newHeapCapacity = (currentHeapSize + 1) * 2;
-				SetHeapCapacity(newHeapCapacity);
+				int currentHeapSize = HeapCount;
+
+				if (((currentHeapSize + 1) * 10) < currentHeapCapacity)
+				{
+					int newHeapCapacity = (currentHeapSize + 1) * 2;
+					SetHeapCapacity(newHeapCapacity);
+				}
 			}
 		}
 
@@ -977,14 +1041,15 @@ namespace Revalee.Service
 			RebuildHashTable(_HashtableBuckets.Length, false);
 		}
 
+		[System.Diagnostics.DebuggerDisplay("Key = {Key}")]
 		private sealed class HeapEntry : IComparable, IComparable<HeapEntry>
 		{
-			public DateTime Due;
-			public TKey Key;
-			public TValue Value;
+			public readonly DateTime Due;
+			public readonly TKey Key;
+			public readonly TValue Value;
+			private readonly long _Ticks;
+			private readonly long _Tiebreak;
 			public bool IsDeleted;
-			private long _Ticks;
-			private long _Tiebreak;
 
 			public HeapEntry(DateTime due, long tiebreak, TKey key, TValue value)
 			{
@@ -1064,6 +1129,22 @@ namespace Revalee.Service
 				if (_HashtableEntries[bucketIndex].HashCode == hashCode && _Comparer.Equals(_HashtableEntries[bucketIndex].Key, key))
 				{
 					return _HashtableEntries[bucketIndex].HeapIndex;
+				}
+			}
+
+			return -1;
+		}
+
+		private int FindHashtableIndex(TKey key)
+		{
+			int hashCode = GetHashCode(key);
+			int slotIndex = hashCode % _HashtableBuckets.Length;
+
+			for (int bucketIndex = _HashtableBuckets[slotIndex]; bucketIndex >= 0; bucketIndex = _HashtableEntries[bucketIndex].NextBucketIndex)
+			{
+				if (_HashtableEntries[bucketIndex].HashCode == hashCode && _Comparer.Equals(_HashtableEntries[bucketIndex].Key, key))
+				{
+					return bucketIndex;
 				}
 			}
 
@@ -1246,7 +1327,7 @@ namespace Revalee.Service
 
 		private int GetHashCode(TKey key)
 		{
-			return _Comparer.GetHashCode(key) & 0x7fffffff | 0x1;
+			return ((_Comparer.GetHashCode(key) & 0x3fffffff) << 1) | 0x1;
 		}
 
 		private static int GetPrime(int minimumNumber)
@@ -1313,6 +1394,7 @@ namespace Revalee.Service
 			}
 		}
 
+		[System.Diagnostics.DebuggerDisplay("Key = {Key}")]
 		private struct HashtableEntry
 		{
 			public int HashCode;

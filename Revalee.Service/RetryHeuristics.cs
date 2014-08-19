@@ -16,7 +16,7 @@ namespace Revalee.Service
 			}
 
 			_FailedCallbackLog.RemoveAllOverdue();
-			int retryIndex = _FailedCallbackLog.AddOrReplace(callbackUrl.Authority, () => 0, (oldValue, oldDue) => oldValue + 1, (newValue, oldDue) => DateTime.UtcNow.Add(_FailureTimeWindow));
+			int retryIndex = _FailedCallbackLog.AddOrReplace(callbackUrl.Authority, (key) => 0, (key, oldValue, oldDue) => oldValue + 1, (key, newValue, oldDue) => DateTime.UtcNow.Add(_FailureTimeWindow));
 			return AssignDelayInterval(retryIndex);
 		}
 
