@@ -396,8 +396,8 @@ namespace Revalee.Service.EsePersistence
 						using (var update = new Update(connection, table, JET_prep.Insert))
 						{
 							Api.SetColumn(connection, table, columnIds[_ColumnNameCallbackId], task.CallbackId);
-							Api.SetColumn(connection, table, columnIds[_ColumnNameCreatedTime], task.CreatedTime);
-							Api.SetColumn(connection, table, columnIds[_ColumnNameCallbackTime], task.CallbackTime);
+							Api.SetColumn(connection, table, columnIds[_ColumnNameCreatedTime], EnforceMinimumDateTime(task.CreatedTime));
+							Api.SetColumn(connection, table, columnIds[_ColumnNameCallbackTime], EnforceMinimumDateTime(task.CallbackTime));
 							Api.SetColumn(connection, table, columnIds[_ColumnNameCallbackUrl], task.CallbackUrl.OriginalString, Encoding.Unicode);
 							Api.SetColumn(connection, table, columnIds[_ColumnNameAttemptsRemaining], task.AttemptsRemaining);
 
@@ -527,8 +527,8 @@ namespace Revalee.Service.EsePersistence
 				throw new InvalidOperationException("Storage provider has not been opened.");
 			}
 
-			DateTime rangeStartTime = NormalizeDateTime(startTime);
-			DateTime rangeEndTime = NormalizeDateTime(endTime);
+			DateTime rangeStartTime = EnforceMinimumDateTime(NormalizeDateTime(startTime));
+			DateTime rangeEndTime = EnforceMinimumDateTime(NormalizeDateTime(endTime));
 
 			// Inclusive Upper Limit does not work properly for the CLR DateTime type.
 			// Add the smallest amount of time that the Esent engine will detect to include the ending range inclusively.
@@ -670,6 +670,18 @@ namespace Revalee.Service.EsePersistence
 
 				transaction.Commit(CommitTransactionGrbit.None);
 			}
+		}
+
+		private static DateTime EnforceMinimumDateTime(DateTime time)
+		{
+			const long minimumTicksForOleAutomationDate = 31241376000000000;
+
+			if (time.Ticks < minimumTicksForOleAutomationDate)
+			{
+				return new DateTime(minimumTicksForOleAutomationDate, DateTimeKind.Utc);
+			}
+
+			return time;
 		}
 
 		private static DateTime NormalizeDateTime(DateTime time)
