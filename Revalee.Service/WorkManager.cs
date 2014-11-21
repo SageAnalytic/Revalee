@@ -72,6 +72,7 @@ namespace Revalee.Service
 			try
 			{
 				HttpWebRequest request = PrepareWebRequest(task);
+				ServicePointManager.Expect100Continue = false;
 				Task<WebResponse> responseTask = Task.Factory.FromAsync<WebResponse>(request.BeginGetResponse, request.EndGetResponse, request);
 				responseTask.ContinueWith(t =>
 				{
