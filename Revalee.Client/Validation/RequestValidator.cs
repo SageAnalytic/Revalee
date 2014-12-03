@@ -154,7 +154,41 @@ namespace Revalee.Client.Validation
 
 		private static byte[] GetSubject(Uri callbackUri)
 		{
-			return Encoding.UTF8.GetBytes(callbackUri.OriginalString);
+			if (callbackUri.IsDefaultPort)
+			{
+				// Remove the port number from the callbackUri if it is the default port for the specified protocol
+				return Encoding.UTF8.GetBytes(RemoveDefaultPortFromOriginalString(callbackUri));
+			}
+			else
+			{
+				return Encoding.UTF8.GetBytes(callbackUri.OriginalString);
+			}
+		}
+
+		private static string RemoveDefaultPortFromOriginalString(Uri callbackUri)
+		{
+			string canonicalizedUriString = callbackUri.OriginalString;
+
+			if (callbackUri.Scheme == Uri.UriSchemeHttp)
+			{
+				int portDelimiterIndex = Uri.UriSchemeHttp.Length + Uri.SchemeDelimiter.Length + callbackUri.Authority.Length;
+
+				if (canonicalizedUriString[portDelimiterIndex] == ':')
+				{
+					canonicalizedUriString = canonicalizedUriString.Substring(0, portDelimiterIndex) + canonicalizedUriString.Substring(portDelimiterIndex + ":80".Length);
+				}
+			}
+			else if (callbackUri.Scheme == Uri.UriSchemeHttps)
+			{
+				int portDelimiterIndex = Uri.UriSchemeHttps.Length + Uri.SchemeDelimiter.Length + callbackUri.Authority.Length;
+
+				if (canonicalizedUriString[portDelimiterIndex] == ':')
+				{
+					canonicalizedUriString = canonicalizedUriString.Substring(0, portDelimiterIndex) + canonicalizedUriString.Substring(portDelimiterIndex + ":443".Length);
+				}
+			}
+
+			return canonicalizedUriString;
 		}
 
 		private static byte[] GetResponseId(Guid callbackId)
