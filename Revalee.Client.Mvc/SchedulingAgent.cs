@@ -241,6 +241,7 @@ namespace Revalee.Client.Mvc
 				throw;
 			}
 
+			httpClient.DefaultRequestHeaders.ExpectContinue = false;
 			httpClient.DefaultRequestHeaders.UserAgent.Clear();
 			httpClient.DefaultRequestHeaders.UserAgent.Add(GetUserAgent());
 			httpClient.Timeout = timeout;

@@ -337,6 +337,7 @@ namespace Revalee.Client
 		private static HttpWebRequest CreateRequest(string url)
 		{
 			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+			request.ServicePoint.Expect100Continue = false;
 			request.AllowAutoRedirect = false;
 			request.KeepAlive = true;
 			request.Method = WebRequestMethods.Http.Put;
