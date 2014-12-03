@@ -127,22 +127,57 @@ namespace Revalee.Client.RecurringTasks
 				if (analysis.IsRecurringTask)
 				{
 					ConfiguredTask taskConfig;
+					HttpStatusCode statusCode;
 
 					if (_Manifest.TryGetTask(analysis.TaskIdentifier, out taskConfig))
 					{
-						if (RevaleeRegistrar.ValidateCallback(new HttpRequestWrapper(request)))
+						if (request.HttpMethod == "POST")
 						{
-							if (taskConfig.SetLastOccurrence(analysis.Occurrence))
+							if (RevaleeRegistrar.ValidateCallback(new HttpRequestWrapper(request)))
 							{
-								application.Context.Items.Add(_InProcessContextKey, BuildCallbackDetails(request));
-								application.Context.RewritePath(taskConfig.Url.AbsolutePath, true);
-								_Manifest.Reschedule(taskConfig);
-								return;
+								if (taskConfig.SetLastOccurrence(analysis.Occurrence))
+								{
+									_Manifest.Reschedule(taskConfig);
+									application.Context.Items.Add(_InProcessContextKey, BuildCallbackDetails(request));
+									application.Context.RewritePath(taskConfig.Url.AbsolutePath, true);
+									return;
+								}
+								else
+								{
+									statusCode = HttpStatusCode.Accepted;
+								}
+							}
+							else
+							{
+								statusCode = HttpStatusCode.Unauthorized;
+							}
+						}
+						else
+						{
+							if (request.HttpMethod == "GET" || request.HttpMethod == "HEAD")
+							{
+								if (request.Headers["Expect"] == "100-continue")
+								{
+									application.Context.Response.StatusCode = (int)HttpStatusCode.Continue;
+									return;
+								}
+								else
+								{
+									statusCode = HttpStatusCode.MethodNotAllowed;
+								}
+							}
+							else
+							{
+								statusCode = HttpStatusCode.NotImplemented;
 							}
 						}
 					}
+					else
+					{
+						statusCode = HttpStatusCode.NoContent;
+					}
 
-					application.Context.Response.StatusCode = (int)HttpStatusCode.OK;
+					application.Context.Response.StatusCode = (int)statusCode;
 					application.Context.Response.SuppressContent = true;
 					application.CompleteRequest();
 					return;
