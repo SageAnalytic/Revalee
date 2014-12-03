@@ -72,45 +72,14 @@ namespace Revalee.Service
 			try
 			{
 				HttpWebRequest request = PrepareWebRequest(task);
-				ServicePointManager.Expect100Continue = false;
 				Task<WebResponse> responseTask = Task.Factory.FromAsync<WebResponse>(request.BeginGetResponse, request.EndGetResponse, request);
 				responseTask.ContinueWith(t =>
 				{
+					HttpWebResponse response = null;
 					try
 					{
-						HttpWebResponse response = null;
-						try
-						{
-							response = (HttpWebResponse)t.Result;
-							ProcessWebResponse(task, response);
-						}
-						catch (AggregateException aex)
-						{
-							if (aex.InnerExceptions.Count == 1 && aex.InnerExceptions[0] is WebException)
-							{
-								ProcessWebException(task, aex.InnerExceptions[0] as WebException);
-							}
-							else
-							{
-								aex = aex.Flatten();
-
-								if (aex.InnerExceptions.Count > 0)
-								{
-									throw aex.InnerExceptions[0];
-								}
-								else
-								{
-									throw;
-								}
-							}
-						}
-						finally
-						{
-							if (response != null)
-							{
-								response.Close();
-							}
-						}
+						response = (HttpWebResponse)t.Result;
+						ProcessWebResponse(task, response);
 					}
 					catch (WebException wex)
 					{
@@ -118,8 +87,24 @@ namespace Revalee.Service
 					}
 					catch (AggregateException aex)
 					{
-						// Non-retryable error
-						CompleteFailedTask(task, aex);
+						WebException wex = ExtractWebException(aex);
+
+						if (wex != null)
+						{
+							ProcessWebException(task, wex);
+						}
+						else
+						{
+							// Non-retryable error
+							CompleteFailedTask(task, FormatGenericExceptionMessage(task, aex));
+						}
+					}
+					finally
+					{
+						if (response != null)
+						{
+							response.Close();
+						}
 					}
 				});
 			}
@@ -130,13 +115,14 @@ namespace Revalee.Service
 			catch (SecurityException sex)
 			{
 				// Non-retryable error
-				CompleteFailedTask(task, sex);
+				CompleteFailedTask(task, FormatGenericExceptionMessage(task, sex));
 			}
 		}
 
 		private static HttpWebRequest PrepareWebRequest(RevaleeTask task)
 		{
 			HttpWebRequest request = (HttpWebRequest)WebRequest.Create(FormatCallbackRequestUrl(task.CallbackUrl));
+			request.ServicePoint.Expect100Continue = false;
 			request.AllowAutoRedirect = true;
 			request.MaximumAutomaticRedirections = 10;
 			request.KeepAlive = false;
@@ -158,6 +144,7 @@ namespace Revalee.Service
 
 			string postedData = FormatFormPayload(task);
 			request.ContentLength = postedData.Length;
+
 			using (Stream stream = request.GetRequestStream())
 			{
 				stream.Write(Encoding.UTF8.GetBytes(postedData), 0, postedData.Length);
@@ -175,11 +162,11 @@ namespace Revalee.Service
 					break;
 
 				case CallbackResult.NonretryableError:
-					CompleteFailedTask(task, response.StatusCode);
+					CompleteFailedTask(task, FormatHttpErrorMessage(task, response.StatusCode));
 					break;
 
 				default:
-					CompleteRetryableTask(task, response.StatusCode);
+					CompleteRetryableTask(task, FormatHttpErrorMessage(task, response.StatusCode));
 					break;
 			}
 		}
@@ -187,23 +174,72 @@ namespace Revalee.Service
 		private void ProcessWebException(RevaleeTask task, WebException wex)
 		{
 			HttpWebResponse failedResponse = (HttpWebResponse)wex.Response;
+
 			if (failedResponse != null)
 			{
 				switch (DetermineResult(failedResponse.StatusCode))
 				{
 					case CallbackResult.NonretryableError:
-						CompleteFailedTask(task, failedResponse.StatusCode);
+						CompleteFailedTask(task, FormatHttpErrorMessage(task, failedResponse.StatusCode));
 						break;
 
 					default:
-						CompleteRetryableTask(task, failedResponse.StatusCode);
+						CompleteRetryableTask(task, FormatHttpErrorMessage(task, failedResponse.StatusCode));
 						break;
 				}
 			}
 			else
 			{
-				CompleteRetryableTask(task, wex);
+				switch (DetermineResult(wex.Status))
+				{
+					case CallbackResult.NonretryableError:
+						CompleteFailedTask(task, FormatWebExceptionMessage(task, wex));
+						break;
+
+					default:
+						CompleteRetryableTask(task, FormatWebExceptionMessage(task, wex));
+						break;
+				}
 			}
+		}
+
+		private static WebException ExtractWebException(AggregateException aex)
+		{
+			if (aex == null || aex.InnerExceptions == null || aex.InnerExceptions.Count == 0)
+			{
+				return null;
+			}
+
+			AggregateException flattenedException = aex.Flatten();
+
+			foreach (Exception innerException in flattenedException.InnerExceptions)
+			{
+				WebException wex = innerException as WebException;
+
+				if (wex != null)
+				{
+					return wex;
+				}
+			}
+
+			return null;
+		}
+
+		private static string FormatHttpErrorMessage(RevaleeTask task, HttpStatusCode statusCode)
+		{
+			return string.Format("Unsuccessful callback to {0} due to HTTP status code {1}. [{2}]",
+				task.CallbackUrl.OriginalString, (int)statusCode, task.CallbackId);
+		}
+
+		private static string FormatWebExceptionMessage(RevaleeTask task, WebException webException)
+		{
+			return string.Format("Unsuccessful callback to {0} with status '{1}'. [{2}]",
+				task.CallbackUrl.OriginalString, webException.Status.ToString(), task.CallbackId);
+		}
+
+		private static string FormatGenericExceptionMessage(RevaleeTask task, Exception exception)
+		{
+			return string.Format("{0} [{1}]", exception.Message, task.CallbackUrl.OriginalString);
 		}
 
 		private static void CompleteSuccessfulTask(RevaleeTask task)
@@ -215,46 +251,25 @@ namespace Revalee.Service
 			RetryHeuristics.OnSuccess(task.CallbackUrl);
 		}
 
-		private static void CompleteFailedTask(RevaleeTask task, HttpStatusCode statusCode)
+		private static void CompleteFailedTask(RevaleeTask task, string message)
 		{
 			Supervisor.State.CompleteTask(task);
-			Supervisor.LogEvent(string.Format("Unsuccessful callback to {0} due to HTTP status code {1}. [{2}]",
-				task.CallbackUrl.OriginalString, (int)statusCode, task.CallbackId), TraceEventType.Error);
+			Supervisor.LogEvent(message, TraceEventType.Error);
 			Supervisor.Telemetry.RecordWaitTime(CalculateWaitTime(DateTime.UtcNow, task));
 			Supervisor.Telemetry.RecordFailedCallback();
 		}
 
-		private static void CompleteFailedTask(RevaleeTask task, Exception exception)
-		{
-			Supervisor.State.CompleteTask(task);
-			Supervisor.LogException(exception, TraceEventType.Error, task.CallbackUrl.OriginalString);
-			Supervisor.Telemetry.RecordWaitTime(CalculateWaitTime(DateTime.UtcNow, task));
-			Supervisor.Telemetry.RecordFailedCallback();
-		}
-
-		private static void CompleteRetryableTask(RevaleeTask task, HttpStatusCode statusCode)
+		private static void CompleteRetryableTask(RevaleeTask task, string message)
 		{
 			if (task.AttemptsRemaining > 0)
 			{
+				Supervisor.LogEvent(message, TraceEventType.Warning);
 				RetryTask(task);
 			}
 			else
 			{
 				// Out of attempts
-				CompleteFailedTask(task, statusCode);
-			}
-		}
-
-		private static void CompleteRetryableTask(RevaleeTask task, Exception exception)
-		{
-			if (task.AttemptsRemaining > 0)
-			{
-				RetryTask(task);
-			}
-			else
-			{
-				// Out of attempts
-				CompleteFailedTask(task, exception);
+				CompleteFailedTask(task, message);
 			}
 		}
 
@@ -363,6 +378,24 @@ namespace Revalee.Service
 					return CallbackResult.NonretryableError;
 
 				case HttpStatusCode.UnsupportedMediaType:
+					return CallbackResult.NonretryableError;
+
+				default:
+					return CallbackResult.RetryableError;
+			}
+		}
+
+		private static CallbackResult DetermineResult(WebExceptionStatus exceptionStatus)
+		{
+			switch (exceptionStatus)
+			{
+				case WebExceptionStatus.Success:
+					return CallbackResult.Success;
+
+				case WebExceptionStatus.MessageLengthLimitExceeded:
+				case WebExceptionStatus.RequestProhibitedByCachePolicy:
+				case WebExceptionStatus.RequestProhibitedByProxy:
+				case WebExceptionStatus.TrustFailure:
 					return CallbackResult.NonretryableError;
 
 				default:
