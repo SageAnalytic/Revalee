@@ -47,6 +47,8 @@ namespace Revalee.Client.RecurringTasks
 		private readonly string _RecurringTaskHandlerAbsolutePath = GetHandlerAbsolutePath();
 		private readonly ITaskCollection _TaskCollection;
 		private Uri _CallbackBaseUri;
+		private Timer _HeartbeatTimer;
+		private int _HeartbeatCount = 0;
 
 		public event EventHandler Activated;
 
@@ -134,7 +136,76 @@ namespace Revalee.Client.RecurringTasks
 		{
 			if (this.CallbackBaseUri != null)
 			{
-				this.Schedule(PrepareHeartbeat());
+				if (!this.IsActive)
+				{
+					if (_HeartbeatTimer == null)
+					{
+						// Schedule a heartbeat on a timer
+						lock (_TaskCollection)
+						{
+							if (_HeartbeatTimer == null)
+							{
+								_HeartbeatTimer = new Timer(delegate(object self)
+								{
+									if (this.IsActive)
+									{
+										lock (_TaskCollection)
+										{
+											_HeartbeatTimer.Dispose();
+											_HeartbeatTimer = null;
+										}
+									}
+									else
+									{
+										if (_HeartbeatTimer == null)
+										{
+											return;
+										}
+
+										Interlocked.Increment(ref _HeartbeatCount);
+
+										lock (_TaskCollection)
+										{
+											if (_HeartbeatTimer != null)
+											{
+												if (_HeartbeatCount > 20)
+												{
+													// Leave current timer setting in-place
+												}
+												else if (_HeartbeatCount > 13)
+												{
+													_HeartbeatTimer.Change(3600000, 14400000);
+												}
+												else if (_HeartbeatCount > 3)
+												{
+													_HeartbeatTimer.Change(60000, 60000);
+												}
+												else if (_HeartbeatCount > 2)
+												{
+													_HeartbeatTimer.Change(49750, 60000);
+												}
+											}
+										}
+
+										try
+										{
+											RevaleeRegistrar.ScheduleCallback(_ClockSource.Now, this.GenerateHeartbeatCallbackUri());
+										}
+										catch (RevaleeRequestException)
+										{
+											// Ignore network errors and retry based on the timer schedule.
+										}
+									}
+								}, null, 250, 10000);
+							}
+						}
+					}
+					else
+					{
+						// Schedule an on-demand heartbeat
+						this.Schedule(this.PrepareHeartbeat());
+					}
+				}
 			}
 		}
 
@@ -280,6 +351,8 @@ namespace Revalee.Client.RecurringTasks
 
 		protected void OnActivate()
 		{
+			_HeartbeatCount = 0;
+
 			if (_CurrentState.TransitionToActive())
 			{
 				Trace.TraceInformation("The Revalee recurring task manager has been activated.");
@@ -307,12 +380,7 @@ namespace Revalee.Client.RecurringTasks
 
 			if (_CurrentState.TransitionToInactive())
 			{
-				Task.Factory.StartNew(() =>
-				{
-					Thread.Sleep(2000);
-					this.Start();
-				});
-
+				this.Start();
 				EventHandler<DeactivationEventArgs> handler = Deactivated;
 
 				if (handler != null)
