@@ -80,6 +80,23 @@ namespace Revalee.SampleSite.Controllers
 			return new HttpStatusCodeResult(HttpStatusCode.OK);
 		}
 
+		[AllowAnonymous]
+		[HttpPost]
+		[CallbackAction]	// This attribute ensures that only legitimately requested callbacks get handled by this action
+		public ActionResult ImmediateCallback(object state)
+		{
+			if (state == null)
+			{
+				Debug.WriteLine("Immediate callback triggered at {0:F} without a state object.", DateTime.Now);
+			}
+			else
+			{
+				Debug.WriteLine("Immediate callback triggered at {0:F} with a state object of: {1}.", DateTime.Now, state.ToString());
+			}
+
+			return new HttpStatusCodeResult(HttpStatusCode.OK);
+		}
+
 		[HttpPost]
 		public ActionResult Recurring()
 		{
