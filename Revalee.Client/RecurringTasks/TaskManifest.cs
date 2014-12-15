@@ -54,6 +54,8 @@ namespace Revalee.Client.RecurringTasks
 
 		public event EventHandler<DeactivationEventArgs> Deactivated;
 
+		public event EventHandler<ActivationFailureEventArgs> ActivationFailed;
+
 		internal TaskManifest()
 		{
 			_TaskCollection = new ImmutableTaskCollection();
@@ -147,54 +149,77 @@ namespace Revalee.Client.RecurringTasks
 							{
 								_HeartbeatTimer = new Timer(delegate(object self)
 								{
-									if (this.IsActive)
+									try
 									{
-										lock (_TaskCollection)
+										if (this.IsActive)
 										{
-											_HeartbeatTimer.Dispose();
-											_HeartbeatTimer = null;
-										}
-									}
-									else
-									{
-										if (_HeartbeatTimer == null)
-										{
-											return;
-										}
-
-										Interlocked.Increment(ref _HeartbeatCount);
-
-										lock (_TaskCollection)
-										{
-											if (_HeartbeatTimer != null)
+											lock (_TaskCollection)
 											{
-												if (_HeartbeatCount > 20)
+												if (_HeartbeatTimer != null)
 												{
-													// Leave current timer setting in-place
-												}
-												else if (_HeartbeatCount > 13)
-												{
-													_HeartbeatTimer.Change(3600000, 14400000);
-												}
-												else if (_HeartbeatCount > 3)
-												{
-													_HeartbeatTimer.Change(60000, 60000);
-												}
-												else if (_HeartbeatCount > 2)
-												{
-													_HeartbeatTimer.Change(49750, 60000);
+													_HeartbeatTimer.Dispose();
+													_HeartbeatTimer = null;
 												}
 											}
 										}
+										else
+										{
+											if (_HeartbeatTimer == null || AppDomain.CurrentDomain.IsFinalizingForUnload())
+											{
+												return;
+											}
 
-										try
-										{
-											RevaleeRegistrar.ScheduleCallback(_ClockSource.Now, this.GenerateHeartbeatCallbackUri());
+											int failureCount = Interlocked.Increment(ref _HeartbeatCount) - 1;
+
+											lock (_TaskCollection)
+											{
+												if (_HeartbeatTimer != null)
+												{
+													if (_HeartbeatCount > 20)
+													{
+														// Leave current timer setting in-place
+													}
+													else if (_HeartbeatCount > 13)
+													{
+														_HeartbeatTimer.Change(3600000, 14400000);
+													}
+													else if (_HeartbeatCount > 3)
+													{
+														_HeartbeatTimer.Change(60000, 60000);
+													}
+													else if (_HeartbeatCount > 2)
+													{
+														_HeartbeatTimer.Change(49750, 60000);
+													}
+												}
+											}
+
+											if (failureCount > 0)
+											{
+												OnActivationFailure(failureCount);
+											}
+
+											try
+											{
+												RevaleeRegistrar.ScheduleCallback(_ClockSource.Now, this.GenerateHeartbeatCallbackUri());
+											}
+											catch (RevaleeRequestException)
+											{
+												// Ignore network errors and retry based on the timer schedule
+											}
 										}
-										catch (RevaleeRequestException)
-										{
-											// Ignore network errors and retry based on the timer schedule.
-										}
+									}
+									catch (AppDomainUnloadedException)
+									{
+										// Ignore errors when already shutting down
+									}
+									catch (ObjectDisposedException)
+									{
+										// Ignore errors when already shutting down
+									}
+									catch (ThreadAbortException)
+									{
+										// Ignore errors when already shutting down
 									}
 								}, null, 250, 10000);
 							}
@@ -387,6 +412,16 @@ namespace Revalee.Client.RecurringTasks
 				{
 					handler(this, new DeactivationEventArgs(exception));
 				}
+			}
+		}
+
+		protected void OnActivationFailure(int failureCount)
+		{
+			EventHandler<ActivationFailureEventArgs> handler = ActivationFailed;
+
+			if (handler != null)
+			{
+				handler(this, new ActivationFailureEventArgs(failureCount));
 			}
 		}
 

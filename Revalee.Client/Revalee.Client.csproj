@@ -47,6 +47,7 @@
     <Compile Include="AsyncRevaleeRegistrar.cs" />
     <Compile Include="Configuration\ClientSettingsConfigurationElement.cs" />
     <Compile Include="Configuration\RevaleeSection.cs" />
+    <Compile Include="RecurringTasks\ActivationFailureEventArgs.cs" />
     <Compile Include="RecurringTasks\ActivationState.cs" />
     <Compile Include="RecurringTasks\RecurringTaskCallbackDetails.cs" />
     <Compile Include="RecurringTasks\CallbackRequest.cs" />

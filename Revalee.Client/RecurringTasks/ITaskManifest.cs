@@ -94,5 +94,10 @@ namespace Revalee.Client.RecurringTasks
 		/// An event handler triggered when the recurring task module is deactivated.
 		/// </summary>
 		event EventHandler<DeactivationEventArgs> Deactivated;
+
+		/// <summary>
+		/// An event handler triggered when an attempt to activate fails.
+		/// </summary>
+		event EventHandler<ActivationFailureEventArgs> ActivationFailed;
 	}
 }

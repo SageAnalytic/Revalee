@@ -15,6 +15,7 @@ namespace Revalee.SampleSite
 
 			manifest.Activated += RecurringTasks_Activated;
 			manifest.Deactivated += RecurringTasks_Deactivated;
+			manifest.ActivationFailed += RecurringTasks_ActivationFailed;
 		}
 
 		protected void Application_Error(object sender, EventArgs e)
@@ -34,6 +35,11 @@ namespace Revalee.SampleSite
 		protected void RecurringTasks_Deactivated(object sender, Revalee.Client.RecurringTasks.DeactivationEventArgs e)
 		{
 			System.Diagnostics.Debug.WriteLine("DEACTIVATED: " + e.Exception.Message);
+		}
+
+		protected void RecurringTasks_ActivationFailed(object sender, Revalee.Client.RecurringTasks.ActivationFailureEventArgs e)
+		{
+			System.Diagnostics.Debug.WriteLine("ACTIVATION FAILURE: attempt #" + e.FailureCount.ToString());
 		}
 	}
 }
