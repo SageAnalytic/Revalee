@@ -7,7 +7,7 @@ To remove the service:
 
 On newer versions of Windows the HTTP listener will need to be registered.
 
-To register the listener on Windows 7 & Windows Server 2008 & Windows Server 2012:
+To register the listener on Windows 7 (or later) & Windows Server 2008 (or later):
 	netsh http add urlacl url=http://+:46200/ user="NT AUTHORITY\NETWORK SERVICE"
 
 

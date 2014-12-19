@@ -17,4 +17,4 @@ using System.Runtime.InteropServices;
 [assembly: NeutralResourcesLanguageAttribute("en-US")]
 [assembly: AssemblyVersion("2.0.0")]
 [assembly: AssemblyFileVersion("2.3.1")]
-[assembly: AssemblyInformationalVersion("2.3.1-alpha")]
+[assembly: AssemblyInformationalVersion("2.3.1")]
